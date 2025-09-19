@@ -9,3 +9,5 @@ You're in the right place!
 This is in development and still being worked on.
 
 There is no server, your teams are saved to browser, but you can export for safe keeping or to transfer between PCs!
+
+Try it out: https://soullink--laughing-lichterman-c3b6ff.netlify.app
