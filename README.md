@@ -1,4 +1,4 @@
-# SoulLink
+# Pokémon Soul Link Tracker
 A web-based Pokémon soul link tracker! Supports generations 1-7.
 
 Playing a Soul Link Nuzlock with a friend?
