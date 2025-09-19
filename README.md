@@ -6,7 +6,7 @@ Trying to work out how on earth you'll keep track of the routes, pokemon, if the
 
 You're in the right place!
 
-This is in development and still being worked on.
+This is in development and still being worked on in my free time.
 
 There is no server, your teams are saved to browser, but you can export for safe keeping or to transfer between PCs!
 
