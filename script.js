@@ -1,4 +1,4 @@
-// Main JavaScript for Multi-Generation Soul Link Nuzlocke Tracker with Carousel and Streamer Mode
+// Main JavaScript for Multi-Generation Soul Link Nuzlocke Tracker with Carousel, Streamer Mode, and Gym Leader Tracking
 
 // Game data structure
 let gameData = {
@@ -19,12 +19,364 @@ let gameData = {
     },
     strictPrimaryTypeMode: true,
     currentGame: null, // Will be set by generation selector
-    currentGeneration: null // Track the generation
+    currentGeneration: null, // Track the generation
+    gymProgress: {} // Track gym leader progress by game
 };
 
 // Carousel state
 let currentCarouselIndex = 0;
 let totalCarouselSlides = 7;
+
+// Current gym progress tab
+let currentGymTab = 'gymLeaders';
+
+// Gym tracker expanded state
+let gymTrackerExpanded = false;
+
+// Confetti Animation Functions
+function createConfetti() {
+    const colors = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#feca57', '#ff9ff3', '#54a0ff'];
+    const confettiContainer = document.createElement('div');
+    confettiContainer.className = 'confetti-container';
+    document.body.appendChild(confettiContainer);
+
+    // Create 150 confetti pieces
+    for (let i = 0; i < 150; i++) {
+        const confetti = document.createElement('div');
+        confetti.className = 'confetti-piece';
+        confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+        confetti.style.left = Math.random() * 100 + '%';
+        confetti.style.animationDelay = Math.random() * 3 + 's';
+        confetti.style.animationDuration = (Math.random() * 2 + 2) + 's';
+        confettiContainer.appendChild(confetti);
+    }
+
+    // Remove confetti after animation
+    setTimeout(() => {
+        document.body.removeChild(confettiContainer);
+    }, 5000);
+}
+
+// Gym Leader Progress Functions
+function initializeGymProgress() {
+    if (!gameData.currentGame) return;
+
+    if (!gameData.gymProgress[gameData.currentGame]) {
+        gameData.gymProgress[gameData.currentGame] = {};
+    }
+}
+
+function toggleGymTrackerExpanded() {
+    gymTrackerExpanded = !gymTrackerExpanded;
+
+    const expandableContent = document.getElementById('gym-expandable-content');
+    const expandBtn = document.getElementById('gym-expand-btn');
+
+    if (gymTrackerExpanded) {
+        expandableContent.style.display = 'block';
+        expandBtn.textContent = '▲';
+        expandBtn.classList.add('expanded');
+        expandBtn.title = 'Collapse gym tracker';
+
+        // Render the full content when expanding
+        renderGymProgressSummary();
+        renderGymProgressTabs();
+        renderGymLeadersGrid();
+    } else {
+        expandableContent.style.display = 'none';
+        expandBtn.textContent = '▼';
+        expandBtn.classList.remove('expanded');
+        expandBtn.title = 'Expand gym tracker';
+    }
+
+    // Save the preference
+    localStorage.setItem('gymTrackerExpanded', gymTrackerExpanded.toString());
+}
+
+function renderCompactProgressSummary() {
+    const gymData = getCurrentGymLeaders();
+    if (!gymData) return;
+
+    const summaryContainer = document.getElementById('compact-progress-summary');
+    const currentProgress = gameData.gymProgress[gameData.currentGame] || {};
+
+    // Count completed gym leaders
+    const completedGyms = gymData.leaders.filter(leader => currentProgress[leader.id]).length;
+    const totalGyms = gymData.leaders.length;
+
+    // Count completed Kanto leaders if they exist
+    let completedKanto = 0;
+    let totalKanto = 0;
+    if (gymData.kantoLeaders) {
+        completedKanto = gymData.kantoLeaders.filter(leader => currentProgress[leader.id]).length;
+        totalKanto = gymData.kantoLeaders.length;
+    }
+
+    // Count completed Elite Four
+    const completedEliteFour = gymData.eliteFour.filter(member => currentProgress[member.id]).length;
+    const totalEliteFour = gymData.eliteFour.length;
+
+    // Check if champion is defeated
+    const champion = gymData.eliteFour.find(member => member.title === 'Champion');
+    const championDefeated = champion ? currentProgress[champion.id] : false;
+
+    let summaryHTML = `
+        <div class="compact-progress-item">
+            <span>Gyms:</span>
+            <span class="compact-badge">${completedGyms}/${totalGyms}</span>
+        </div>
+    `;
+
+    if (totalKanto > 0) {
+        summaryHTML += `
+            <div class="compact-progress-item">
+                <span>Kanto:</span>
+                <span class="compact-badge">${completedKanto}/${totalKanto}</span>
+            </div>
+        `;
+    }
+
+    summaryHTML += `
+        <div class="compact-progress-item">
+            <span>E4:</span>
+            <span class="compact-badge elite-four">${completedEliteFour}/${totalEliteFour}</span>
+        </div>
+    `;
+
+    if (championDefeated) {
+        summaryHTML += `
+            <div class="compact-progress-item">
+                <span>Champion:</span>
+                <span class="compact-badge champion">✓</span>
+            </div>
+        `;
+    }
+
+    summaryContainer.innerHTML = summaryHTML;
+}
+
+function toggleGymLeader(leaderId) {
+    initializeGymProgress();
+    const currentProgress = gameData.gymProgress[gameData.currentGame];
+    currentProgress[leaderId] = !currentProgress[leaderId];
+
+    // Check if champion was just defeated
+    const gymData = getCurrentGymLeaders();
+    if (gymData) {
+        const champion = gymData.eliteFour.find(member => member.title === 'Champion');
+        if (champion && champion.id === leaderId && currentProgress[leaderId]) {
+            // Champion defeated! Show confetti
+            createConfetti();
+            showToast('🎉 CHAMPION DEFEATED! Congratulations on completing your Nuzlocke! 🎉', 'success', 6000);
+        }
+    }
+
+    saveData();
+    renderGymLeaderTracker();
+}
+
+function renderGymLeaderTracker() {
+    const gymData = getCurrentGymLeaders();
+    if (!gymData) {
+        document.getElementById('gym-leader-tracker').style.display = 'none';
+        return;
+    }
+
+    document.getElementById('gym-leader-tracker').style.display = 'block';
+    initializeGymProgress();
+
+    // Always render the compact summary
+    renderCompactProgressSummary();
+
+    // Only render the expanded content if expanded
+    if (gymTrackerExpanded) {
+        renderGymProgressSummary();
+        renderGymProgressTabs();
+        renderGymLeadersGrid();
+    }
+
+    // Load saved expansion state
+    const savedExpanded = localStorage.getItem('gymTrackerExpanded');
+    if (savedExpanded !== null) {
+        gymTrackerExpanded = savedExpanded === 'true';
+        const expandableContent = document.getElementById('gym-expandable-content');
+        const expandBtn = document.getElementById('gym-expand-btn');
+
+        if (gymTrackerExpanded) {
+            expandableContent.style.display = 'block';
+            expandBtn.textContent = '▲';
+            expandBtn.classList.add('expanded');
+            expandBtn.title = 'Collapse gym tracker';
+            renderGymProgressSummary();
+            renderGymProgressTabs();
+            renderGymLeadersGrid();
+        } else {
+            expandableContent.style.display = 'none';
+            expandBtn.textContent = '▼';
+            expandBtn.classList.remove('expanded');
+            expandBtn.title = 'Expand gym tracker';
+        }
+    }
+}
+
+function renderGymProgressSummary() {
+    const gymData = getCurrentGymLeaders();
+    if (!gymData) return;
+
+    const summaryContainer = document.getElementById('progress-summary');
+    const currentProgress = gameData.gymProgress[gameData.currentGame] || {};
+
+    // Count completed gym leaders
+    const completedGyms = gymData.leaders.filter(leader => currentProgress[leader.id]).length;
+    const totalGyms = gymData.leaders.length;
+
+    // Count completed Kanto leaders if they exist
+    let completedKanto = 0;
+    let totalKanto = 0;
+    if (gymData.kantoLeaders) {
+        completedKanto = gymData.kantoLeaders.filter(leader => currentProgress[leader.id]).length;
+        totalKanto = gymData.kantoLeaders.length;
+    }
+
+    // Count completed Elite Four
+    const completedEliteFour = gymData.eliteFour.filter(member => currentProgress[member.id]).length;
+    const totalEliteFour = gymData.eliteFour.length;
+
+    // Check if champion is defeated
+    const champion = gymData.eliteFour.find(member => member.title === 'Champion');
+    const championDefeated = champion ? currentProgress[champion.id] : false;
+
+    let summaryHTML = `
+        <div class="progress-item">
+            <span>Gym Leaders:</span>
+            <span class="progress-badge">${completedGyms}/${totalGyms}</span>
+        </div>
+    `;
+
+    if (totalKanto > 0) {
+        summaryHTML += `
+            <div class="progress-item">
+                <span>Kanto Leaders:</span>
+                <span class="progress-badge">${completedKanto}/${totalKanto}</span>
+            </div>
+        `;
+    }
+
+    summaryHTML += `
+        <div class="progress-item">
+            <span>Elite Four:</span>
+            <span class="progress-badge elite-four">${completedEliteFour}/${totalEliteFour}</span>
+        </div>
+    `;
+
+    if (championDefeated) {
+        summaryHTML += `
+            <div class="progress-item">
+                <span>Champion:</span>
+                <span class="progress-badge champion">DEFEATED!</span>
+            </div>
+        `;
+    }
+
+    summaryContainer.innerHTML = summaryHTML;
+
+    // Show/hide champion defeated notice
+    const championNotice = document.getElementById('champion-defeated-notice');
+    if (championDefeated) {
+        championNotice.style.display = 'block';
+    } else {
+        championNotice.style.display = 'none';
+    }
+}
+
+function renderGymProgressTabs() {
+    const gymData = getCurrentGymLeaders();
+    if (!gymData) return;
+
+    const tabsContainer = document.getElementById('gym-progress-tabs');
+    let tabsHTML = `
+        <button class="progress-tab ${currentGymTab === 'gymLeaders' ? 'active' : ''}" onclick="switchGymTab('gymLeaders')">
+            Gym Leaders
+        </button>
+    `;
+
+    if (gymData.kantoLeaders && gymData.kantoLeaders.length > 0) {
+        tabsHTML += `
+            <button class="progress-tab ${currentGymTab === 'kantoLeaders' ? 'active' : ''}" onclick="switchGymTab('kantoLeaders')">
+                Kanto Leaders
+            </button>
+        `;
+    }
+
+    tabsHTML += `
+        <button class="progress-tab ${currentGymTab === 'eliteFour' ? 'active' : ''}" onclick="switchGymTab('eliteFour')">
+            Elite Four
+        </button>
+    `;
+
+    tabsContainer.innerHTML = tabsHTML;
+}
+
+function switchGymTab(tab) {
+    currentGymTab = tab;
+    renderGymProgressTabs();
+    renderGymLeadersGrid();
+}
+
+function renderGymLeadersGrid() {
+    const gymData = getCurrentGymLeaders();
+    if (!gymData) return;
+
+    const gridContainer = document.getElementById('gym-leaders-grid');
+    const currentProgress = gameData.gymProgress[gameData.currentGame] || {};
+
+    let leaders = [];
+
+    switch (currentGymTab) {
+        case 'gymLeaders':
+            leaders = gymData.leaders;
+            break;
+        case 'kantoLeaders':
+            leaders = gymData.kantoLeaders || [];
+            break;
+        case 'eliteFour':
+            leaders = gymData.eliteFour;
+            break;
+    }
+
+    let gridHTML = '';
+
+    leaders.forEach(leader => {
+        const isDefeated = currentProgress[leader.id] || false;
+        const isChampion = leader.title === 'Champion';
+
+        let itemClass = 'gym-leader-item';
+        if (isDefeated) itemClass += ' defeated';
+        if (isChampion) itemClass += ' champion';
+
+        const typeClass = leader.type.toLowerCase().replace(/[^a-z]/g, '');
+
+        gridHTML += `
+            <div class="${itemClass}" onclick="toggleGymLeader('${leader.id}')" style="cursor: pointer;">
+                <input type="checkbox" 
+                       class="gym-leader-checkbox" 
+                       ${isDefeated ? 'checked' : ''} 
+                       id="gym-${leader.id}"
+                       onclick="toggleGymLeader('${leader.id}'); event.stopPropagation();">
+                <div class="gym-leader-info">
+                    <div class="gym-leader-name">${leader.name}</div>
+                    <div class="gym-leader-details">
+                        ${leader.location || leader.title} ${leader.badge ? `• ${leader.badge}` : ''}
+                    </div>
+                    <div class="gym-leader-type type-${typeClass}">${leader.type}</div>
+                </div>
+                <div class="level-cap">Lv. ${leader.levelCap}</div>
+            </div>
+        `;
+    });
+
+    gridContainer.innerHTML = gridHTML;
+}
 
 // Improved Toast notification system
 function showToast(message, type = 'success', duration = 4000) {
@@ -445,6 +797,7 @@ function switchGame() {
     updateCounts();
     updateGenerationDisplay();
     refreshAutocomplete();
+    renderGymLeaderTracker();
 
     showToast(`Switched to ${gameRoutes[newGame].name}!`, 'info');
 }
@@ -639,9 +992,32 @@ function initializeApp() {
     updateStrictModeUI();
     updateGenerationDisplay();
     initializeGameSelector();
+    renderGymLeaderTracker();
+
+    // Force update streamer window if it exists
+    if (streamerWindow && !streamerWindow.closed) {
+        setTimeout(() => {
+            updateStreamerWindow();
+        }, 100);
+    }
 
     // Show initialization toast
     showToast('App initialized successfully!', 'info');
+}
+
+// Additional helper function to manually refresh streamer window
+function forceRefreshStreamerWindow() {
+    if (streamerWindow && !streamerWindow.closed) {
+        try {
+            updateStreamerWindow();
+            showToast('Streamer window refreshed!', 'info');
+        } catch (error) {
+            console.error('Failed to refresh streamer window:', error);
+            showToast('Failed to refresh streamer window. Try closing and reopening it.', 'error');
+        }
+    } else {
+        showToast('No streamer window is currently open.', 'warning');
+    }
 }
 
 // Initialize on page load
@@ -1895,13 +2271,29 @@ function renderAvailablePokemon() {
 }
 
 // Enhanced save function to also update streamer window
-const originalSaveData = saveData;
 function saveData() {
     localStorage.setItem('soulLinkDataMultiGen', JSON.stringify(gameData));
+
+    // Always try to update streamer window when data is saved
     if (streamerWindow && !streamerWindow.closed) {
-        updateStreamerWindow();
+        try {
+            updateStreamerWindow();
+        } catch (error) {
+            console.log('Streamer window update failed in saveData:', error);
+            // If update fails, the window might be in a bad state, try to refresh it
+            setTimeout(() => {
+                if (streamerWindow && !streamerWindow.closed) {
+                    try {
+                        updateStreamerWindow();
+                    } catch (retryError) {
+                        console.log('Streamer window retry update also failed:', retryError);
+                    }
+                }
+            }, 500);
+        }
     }
 }
+
 
 // Load data from localStorage with generation support
 function loadData() {
@@ -1921,7 +2313,8 @@ function loadData() {
                 },
                 strictPrimaryTypeMode: loaded.strictPrimaryTypeMode !== undefined ? loaded.strictPrimaryTypeMode : true,
                 currentGame: loaded.currentGame,
-                currentGeneration: loaded.currentGeneration
+                currentGeneration: loaded.currentGeneration,
+                gymProgress: loaded.gymProgress || {} // Load gym progress
             };
 
             // Add backwards compatibility properties
@@ -1977,7 +2370,8 @@ function clearAllData() {
             },
             strictPrimaryTypeMode: true,
             currentGame: null,
-            currentGeneration: null
+            currentGeneration: null,
+            gymProgress: {}
         };
         saveData();
 
@@ -2034,7 +2428,8 @@ document.addEventListener('DOMContentLoaded', function () {
                             },
                             strictPrimaryTypeMode: imported.strictPrimaryTypeMode !== undefined ? imported.strictPrimaryTypeMode : true,
                             currentGame: imported.currentGame || 'hoenn_gen3',
-                            currentGeneration: imported.currentGeneration || 3
+                            currentGeneration: imported.currentGeneration || 3,
+                            gymProgress: imported.gymProgress || {} // Import gym progress
                         };
 
                         // Update Pokemon names and evolution lines based on imported generation
@@ -2043,8 +2438,20 @@ document.addEventListener('DOMContentLoaded', function () {
                             updateEvolutionLinesForGeneration(gameData.currentGeneration);
                         }
 
+                        // Save data first
                         saveData();
+
+                        // Initialize the main app
                         initializeApp();
+
+                        // Force update streamer window after a brief delay to ensure all data is loaded
+                        if (streamerWindow && !streamerWindow.closed) {
+                            setTimeout(() => {
+                                updateStreamerWindow();
+                                console.log('Streamer window force-updated after import');
+                            }, 100);
+                        }
+
                         showToast('Save file imported successfully!', 'success');
                     } else {
                         showToast('Invalid save file format!', 'error');
@@ -2137,6 +2544,7 @@ function editPlayerName(player) {
         gameData.playerNames[`player${player}`] = newName.trim();
         saveData();
         updatePlayerNameDisplays();
+        renderGymLeaderTracker(); // Update gym tracker with new name
         showToast(`Player ${player} name updated to ${newName.trim()}!`, 'success');
     }
 }
@@ -2506,6 +2914,14 @@ function openStreamerMode() {
 
     if (streamerWindow) {
         setupStreamerWindow();
+
+        // Ensure window is fully loaded before first update
+        setTimeout(() => {
+            if (streamerWindow && !streamerWindow.closed) {
+                updateStreamerWindow();
+            }
+        }, 200);
+
         showToast('Streamer mode window opened! Resize and position it for your stream overlay.', 'success');
     } else {
         showToast('Failed to open streamer mode. Please allow popups for this site.', 'error');
@@ -2671,12 +3087,97 @@ function setupStreamerWindow() {
                     text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
                 }
                 
+                .gym-progress-bar {
+                    position: absolute;
+                    top: 5px;
+                    left: 50%;
+                    transform: translateX(-50%);
+                    display: flex;
+                    gap: 8px;
+                    align-items: center;
+                    background: rgba(0, 0, 0, 0.8);
+                    padding: 4px 8px;
+                    border-radius: 6px;
+                    border: 1px solid rgba(255, 255, 255, 0.3);
+                    transition: all 0.3s ease;
+                    z-index: 90;
+                }
+                
+                .gym-section {
+                    display: flex;
+                    align-items: center;
+                    gap: 3px;
+                }
+                
+                .gym-label {
+                    font-size: 5px;
+                    color: rgba(255, 255, 255, 0.8);
+                    text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.8);
+                }
+                
+                .gym-counter {
+                    background: rgba(255, 255, 255, 0.2);
+                    padding: 1px 4px;
+                    border-radius: 3px;
+                    font-size: 6px;
+                    font-weight: bold;
+                    min-width: 20px;
+                    text-align: center;
+                    text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.8);
+                    transition: all 0.3s ease;
+                }
+                
+                .gym-counter.gyms {
+                    color: #4CAF50;
+                    border: 1px solid rgba(76, 175, 80, 0.5);
+                }
+                
+                .gym-counter.elite-four {
+                    color: #9C27B0;
+                    border: 1px solid rgba(156, 39, 176, 0.5);
+                }
+                
+                .gym-counter.champion {
+                    color: #FF9800;
+                    border: 1px solid rgba(255, 152, 0, 0.5);
+                    animation: championGlow 2s ease-in-out infinite alternate;
+                }
+                
+                .gym-divider {
+                    width: 1px;
+                    height: 12px;
+                    background: rgba(255, 255, 255, 0.3);
+                }
+                
+                @keyframes championGlow {
+                    0% { 
+                        box-shadow: 0 0 3px rgba(255, 152, 0, 0.5);
+                        background: rgba(255, 152, 0, 0.2);
+                    }
+                    100% { 
+                        box-shadow: 0 0 8px rgba(255, 152, 0, 0.8);
+                        background: rgba(255, 152, 0, 0.4);
+                    }
+                }
+                
+                .generation-info {
+                    position: absolute;
+                    top: 5px;
+                    right: 10px;
+                    color: white;
+                    padding: 2px 6px;
+                    border-radius: 4px;
+                    font-size: 6px;
+                    text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.5);
+                    transition: background 0.3s ease;
+                }
+                
                 .streamer-container {
                     display: flex;
                     gap: 20px;
                     height: 100%;
                     align-items: center;
-                    margin-top: 25px;
+                    margin-top: 30px;
                 }
                 
                 .team-section {
@@ -2813,18 +3314,6 @@ function setupStreamerWindow() {
                     z-index: 10;
                 }
                 
-                .generation-info {
-                    position: absolute;
-                    top: 5px;
-                    right: 10px;
-                    color: white;
-                    padding: 2px 6px;
-                    border-radius: 4px;
-                    font-size: 6px;
-                    text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.5);
-                    transition: background 0.3s ease;
-                }
-                
                 /* Type colors */
                 .type-normal { background: #a8a878; }
                 .type-fire { background: #f08030; }
@@ -2867,6 +3356,24 @@ function setupStreamerWindow() {
                     </select>
                 </div>
             </div>
+            
+            <div class="gym-progress-bar" id="gym-progress-bar">
+                <div class="gym-section">
+                    <div class="gym-label">Gyms:</div>
+                    <div class="gym-counter gyms" id="gym-count">0/8</div>
+                </div>
+                <div class="gym-divider"></div>
+                <div class="gym-section">
+                    <div class="gym-label">E4:</div>
+                    <div class="gym-counter elite-four" id="elite-four-count">0/4</div>
+                </div>
+                <div class="gym-section" id="champion-section" style="display: none;">
+                    <div class="gym-divider"></div>
+                    <div class="gym-label">Champ:</div>
+                    <div class="gym-counter champion" id="champion-status">✗</div>
+                </div>
+            </div>
+            
             <div class="generation-info" id="streamer-gen-info">Gen I</div>
             <div class="streamer-container">
                 <div class="team-section">
@@ -2916,6 +3423,12 @@ function setupStreamerWindow() {
                         if (genInfo) {
                             genInfo.style.background = theme.genBg;
                             genInfo.style.color = theme.genBg.includes('fff') ? '#000' : '#fff';
+                        }
+                        
+                        // Update gym progress bar
+                        const gymProgressBar = document.getElementById('gym-progress-bar');
+                        if (gymProgressBar) {
+                            gymProgressBar.style.borderColor = theme.accent + '80';
                         }
                         
                         // Update sprite borders for accent color
@@ -3020,10 +3533,24 @@ function setupStreamerWindow() {
 
 // Update the streamer window with current team data
 function updateStreamerWindow() {
-    if (!streamerWindow || streamerWindow.closed) return;
+    if (!streamerWindow || streamerWindow.closed) {
+        console.log('Streamer window is not available for update');
+        return;
+    }
 
     try {
         const doc = streamerWindow.document;
+
+        // Check if document is ready
+        if (!doc || doc.readyState !== 'complete') {
+            console.log('Streamer window document not ready, retrying...');
+            setTimeout(() => {
+                if (streamerWindow && !streamerWindow.closed) {
+                    updateStreamerWindow();
+                }
+            }, 100);
+            return;
+        }
 
         // Update generation info
         const genInfo = doc.getElementById('streamer-gen-info');
@@ -3031,6 +3558,9 @@ function updateStreamerWindow() {
             const genDisplay = generationRomanNumerals[gameData.currentGeneration] || gameData.currentGeneration;
             genInfo.textContent = `Gen ${genDisplay}`;
         }
+
+        // Update gym progress
+        updateStreamerGymProgress(doc);
 
         // Update player names
         const player1Header = doc.getElementById('streamer-player1-name');
@@ -3041,10 +3571,119 @@ function updateStreamerWindow() {
         // Update teams
         updateStreamerTeam(1, doc);
         updateStreamerTeam(2, doc);
+
+        console.log('Streamer window updated successfully');
     } catch (error) {
-        console.log('Streamer window update failed:', error);
+        console.error('Streamer window update failed:', error);
+
+        // If there's an error, the window might be in a bad state
+        // Try one more time after a longer delay
+        setTimeout(() => {
+            if (streamerWindow && !streamerWindow.closed) {
+                try {
+                    updateStreamerWindow();
+                } catch (retryError) {
+                    console.error('Streamer window retry update also failed:', retryError);
+                }
+            }
+        }, 1000);
     }
 }
+
+// New function to update gym progress in streamer window
+function updateStreamerGymProgress(doc) {
+    const gymData = getCurrentGymLeaders();
+    if (!gymData) {
+        // Hide gym progress if no gym data available
+        const gymProgressBar = doc.getElementById('gym-progress-bar');
+        if (gymProgressBar) {
+            gymProgressBar.style.display = 'none';
+        }
+        return;
+    }
+
+    const currentProgress = gameData.gymProgress[gameData.currentGame] || {};
+
+    // Show gym progress bar
+    const gymProgressBar = doc.getElementById('gym-progress-bar');
+    if (gymProgressBar) {
+        gymProgressBar.style.display = 'flex';
+    }
+
+    // Count completed gym leaders
+    const completedGyms = gymData.leaders.filter(leader => currentProgress[leader.id]).length;
+    const totalGyms = gymData.leaders.length;
+
+    // Count completed Kanto leaders if they exist
+    let completedKanto = 0;
+    let totalKanto = 0;
+    if (gymData.kantoLeaders) {
+        completedKanto = gymData.kantoLeaders.filter(leader => currentProgress[leader.id]).length;
+        totalKanto = gymData.kantoLeaders.length;
+    }
+
+    // Total gym count (main region + kanto if applicable)
+    const totalGymCount = totalGyms + totalKanto;
+    const completedGymCount = completedGyms + completedKanto;
+
+    // Count completed Elite Four (excluding champion)
+    const eliteFourMembers = gymData.eliteFour.filter(member => member.title !== 'Champion');
+    const completedEliteFour = eliteFourMembers.filter(member => currentProgress[member.id]).length;
+    const totalEliteFour = eliteFourMembers.length;
+
+    // Check if champion is defeated
+    const champion = gymData.eliteFour.find(member => member.title === 'Champion');
+    const championDefeated = champion ? currentProgress[champion.id] : false;
+
+    // Update gym counter
+    const gymCountEl = doc.getElementById('gym-count');
+    if (gymCountEl) {
+        gymCountEl.textContent = `${completedGymCount}/${totalGymCount}`;
+
+        // Add completion styling
+        if (completedGymCount === totalGymCount && totalGymCount > 0) {
+            gymCountEl.style.background = 'rgba(76, 175, 80, 0.4)';
+            gymCountEl.style.color = '#4CAF50';
+        } else {
+            gymCountEl.style.background = 'rgba(255, 255, 255, 0.2)';
+            gymCountEl.style.color = '#4CAF50';
+        }
+    }
+
+    // Update Elite Four counter
+    const eliteFourCountEl = doc.getElementById('elite-four-count');
+    if (eliteFourCountEl) {
+        eliteFourCountEl.textContent = `${completedEliteFour}/${totalEliteFour}`;
+
+        // Add completion styling
+        if (completedEliteFour === totalEliteFour && totalEliteFour > 0) {
+            eliteFourCountEl.style.background = 'rgba(156, 39, 176, 0.4)';
+            eliteFourCountEl.style.color = '#9C27B0';
+        } else {
+            eliteFourCountEl.style.background = 'rgba(255, 255, 255, 0.2)';
+            eliteFourCountEl.style.color = '#9C27B0';
+        }
+    }
+
+    // Update Champion status
+    const championSection = doc.getElementById('champion-section');
+    const championStatusEl = doc.getElementById('champion-status');
+    if (championSection && championStatusEl && champion) {
+        championSection.style.display = 'flex';
+        championStatusEl.textContent = championDefeated ? '✓' : '✗';
+
+        if (championDefeated) {
+            championStatusEl.style.background = 'rgba(255, 152, 0, 0.4)';
+            championStatusEl.style.color = '#FF9800';
+        } else {
+            championStatusEl.style.background = 'rgba(255, 255, 255, 0.2)';
+            championStatusEl.style.color = '#FF9800';
+        }
+    } else if (championSection && !champion) {
+        championSection.style.display = 'none';
+    }
+}
+
 
 // Update a specific team in the streamer window
 function updateStreamerTeam(playerNum, doc) {
