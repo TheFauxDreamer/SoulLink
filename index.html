@@ -69,11 +69,6 @@
             animation: sparkleFloat 1.5s ease-in-out infinite alternate;
         }
 
-        .shiny-border {
-            border: 2px solid #ffd700 !important;
-            box-shadow: 0 0 15px rgba(255, 215, 0, 0.6) !important;
-        }
-
         @keyframes sparkleFloat {
             0% { 
                 transform: translateY(0px) rotate(0deg); 
@@ -93,20 +88,51 @@
         }
 
         .shiny-checkbox {
-            width: 12px;
-            height: 12px;
+            width: 16px;
+            height: 16px;
             cursor: pointer;
+            appearance: none;
+            border: 2px solid #2a5834;
+            background: #fff;
+            border-radius: 3px;
+            position: relative;
+            transition: all 0.2s;
+        }
+
+        .shiny-checkbox:hover {
+            background: #f0fff0;
+            border-color: #4a9d2f;
+            transform: translateY(-1px);
+            box-shadow: 0 1px 0 #2a5834;
+        }
+
+        .shiny-checkbox:checked {
+            background: #78c850;
+            border-color: #4a9d2f;
+        }
+
+        .shiny-checkbox:checked::after {
+            content: '✓';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-size: 10px;
+            font-weight: bold;
+            text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.3);
         }
 
         .shiny-label {
             color: #2a5834;
             cursor: pointer;
             user-select: none;
+            font-family: 'Press Start 2P', monospace;
+            font-size: 8px;
         }
 
         .shiny-label:hover {
-            color: #ffd700;
-            text-shadow: 0 0 5px rgba(255, 215, 0, 0.5);
+            color: #4a9d2f;
         }
 
         /* Generation Carousel Modal Styles */
@@ -1470,30 +1496,34 @@
                 <div class="player-input">
                     <h3 id="input-player1-name">Player 1</h3>
                     <div class="pokemon-inputs">
-                        <div class="pokemon-input-wrapper">
-                            <input type="text" id="player1-pokemon" placeholder="Pokemon name..." autocomplete="off">
-                            <div class="autocomplete-dropdown" id="player1-dropdown"></div>
+                        <div style="display: flex; gap: 10px; align-items: center;">
+                            <div class="pokemon-input-wrapper" style="flex: 1;">
+                                <input type="text" id="player1-pokemon" placeholder="Pokemon name..." autocomplete="off">
+                                <div class="autocomplete-dropdown" id="player1-dropdown"></div>
+                            </div>
+                            <div class="shiny-checkbox-container">
+                                <input type="checkbox" id="player1-shiny" class="shiny-checkbox">
+                                <label for="player1-shiny" class="shiny-label">✨ Shiny</label>
+                            </div>
                         </div>
                         <input type="text" id="player1-nickname" placeholder="Nickname (optional)">
-                        <div class="shiny-checkbox-container">
-                            <input type="checkbox" id="player1-shiny" class="shiny-checkbox">
-                            <label for="player1-shiny" class="shiny-label">✨ Shiny Pokemon</label>
-                        </div>
                     </div>
                 </div>
 
                 <div class="player-input">
                     <h3 id="input-player2-name">Player 2</h3>
                     <div class="pokemon-inputs">
-                        <div class="pokemon-input-wrapper">
-                            <input type="text" id="player2-pokemon" placeholder="Pokemon name..." autocomplete="off">
-                            <div class="autocomplete-dropdown" id="player2-dropdown"></div>
+                        <div style="display: flex; gap: 10px; align-items: center;">
+                            <div class="pokemon-input-wrapper" style="flex: 1;">
+                                <input type="text" id="player2-pokemon" placeholder="Pokemon name..." autocomplete="off">
+                                <div class="autocomplete-dropdown" id="player2-dropdown"></div>
+                            </div>
+                            <div class="shiny-checkbox-container">
+                                <input type="checkbox" id="player2-shiny" class="shiny-checkbox">
+                                <label for="player2-shiny" class="shiny-label">✨ Shiny</label>
+                            </div>
                         </div>
                         <input type="text" id="player2-nickname" placeholder="Nickname (optional)">
-                        <div class="shiny-checkbox-container">
-                            <input type="checkbox" id="player2-shiny" class="shiny-checkbox">
-                            <label for="player2-shiny" class="shiny-label">✨ Shiny Pokemon</label>
-                        </div>
                     </div>
                 </div>
             </div>
