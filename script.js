@@ -1,4 +1,4 @@
-// Main JavaScript for Multi-Generation Soul Link Nuzlocke Tracker with Carousel
+// Main JavaScript for Multi-Generation Soul Link Nuzlocke Tracker with Carousel and Streamer Mode
 
 // Game data structure
 let gameData = {
@@ -1847,9 +1847,13 @@ function renderAvailablePokemon() {
     });
 }
 
-// Save data to localStorage
+// Enhanced save function to also update streamer window
+const originalSaveData = saveData;
 function saveData() {
     localStorage.setItem('soulLinkDataMultiGen', JSON.stringify(gameData));
+    if (streamerWindow && !streamerWindow.closed) {
+        updateStreamerWindow();
+    }
 }
 
 // Load data from localStorage with generation support
@@ -2430,6 +2434,603 @@ document.addEventListener('click', function (e) {
         closeSuggestionModal();
     }
 });
+
+// Streamer Mode Functions
+let streamerWindow = null;
+
+// Open Twitch Streamer Mode popup window
+function openStreamerMode() {
+    // Close existing window if open
+    if (streamerWindow && !streamerWindow.closed) {
+        streamerWindow.close();
+    }
+    
+    // Create popup window with proper dimensions for 6 Pokemon per team
+    const width = 1000;  // Increased width to fit 6 Pokemon horizontally
+    const height = 220;  // Slightly increased height for better spacing
+    const left = (screen.width - width) / 2;
+    const top = (screen.height - height) / 2;
+    
+    streamerWindow = window.open(
+        '',
+        'StreamerMode',
+        `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=no,toolbar=no,menubar=no,location=no,status=no`
+    );
+    
+    if (streamerWindow) {
+        setupStreamerWindow();
+        showToast('Streamer mode window opened! Resize and position it for your stream overlay.', 'success');
+    } else {
+        showToast('Failed to open streamer mode. Please allow popups for this site.', 'error');
+    }
+}
+
+// Color themes for streamer mode
+const streamerThemes = {
+    'black-red': {
+        name: 'Black & Red',
+        background: 'rgba(0, 0, 0, 0.9)',
+        accent: '#e74c3c',
+        secondary: '#c0392b',
+        text: '#ffffff',
+        genBg: 'rgba(231, 76, 60, 0.9)'
+    },
+    'white-pink': {
+        name: 'White & Pink',
+        background: 'rgba(255, 255, 255, 0.95)',
+        accent: '#e91e63',
+        secondary: '#ad1457',
+        text: '#333333',
+        genBg: 'rgba(233, 30, 99, 0.9)'
+    },
+    'dark-blue': {
+        name: 'Dark Blue & Cyan',
+        background: 'rgba(20, 30, 60, 0.9)',
+        accent: '#00bcd4',
+        secondary: '#0097a7',
+        text: '#ffffff',
+        genBg: 'rgba(0, 188, 212, 0.9)'
+    },
+    'dark-purple': {
+        name: 'Dark Purple & Pink',
+        background: 'rgba(40, 20, 60, 0.9)',
+        accent: '#e91e63',
+        secondary: '#ad1457',
+        text: '#ffffff',
+        genBg: 'rgba(233, 30, 99, 0.9)'
+    },
+    'dark-green': {
+        name: 'Dark Green & Lime',
+        background: 'rgba(20, 40, 20, 0.9)',
+        accent: '#8bc34a',
+        secondary: '#689f38',
+        text: '#ffffff',
+        genBg: 'rgba(139, 195, 74, 0.9)'
+    },
+    'charcoal-orange': {
+        name: 'Charcoal & Orange',
+        background: 'rgba(40, 40, 40, 0.9)',
+        accent: '#ff9800',
+        secondary: '#f57c00',
+        text: '#ffffff',
+        genBg: 'rgba(255, 152, 0, 0.9)'
+    },
+    'navy-gold': {
+        name: 'Navy & Gold',
+        background: 'rgba(25, 35, 55, 0.9)',
+        accent: '#ffc107',
+        secondary: '#ff8f00',
+        text: '#ffffff',
+        genBg: 'rgba(255, 193, 7, 0.9)'
+    },
+    'dark-teal': {
+        name: 'Dark Teal & White',
+        background: 'rgba(20, 50, 50, 0.9)',
+        accent: '#ffffff',
+        secondary: '#f5f5f5',
+        text: '#ffffff',
+        genBg: 'rgba(255, 255, 255, 0.9)'
+    },
+    'maroon-yellow': {
+        name: 'Maroon & Yellow',
+        background: 'rgba(60, 20, 20, 0.9)',
+        accent: '#ffeb3b',
+        secondary: '#fbc02d',
+        text: '#ffffff',
+        genBg: 'rgba(255, 235, 59, 0.9)'
+    },
+    'gray-green': {
+        name: 'Gray & Green',
+        background: 'rgba(50, 50, 50, 0.9)',
+        accent: '#4caf50',
+        secondary: '#388e3c',
+        text: '#ffffff',
+        genBg: 'rgba(76, 175, 80, 0.9)'
+    },
+    'brown-cream': {
+        name: 'Dark Brown & Cream',
+        background: 'rgba(60, 40, 30, 0.9)',
+        accent: '#fff8e1',
+        secondary: '#ffecb3',
+        text: '#ffffff',
+        genBg: 'rgba(255, 248, 225, 0.9)'
+    }
+};
+
+// Setup the streamer window content and styling
+function setupStreamerWindow() {
+    if (!streamerWindow) return;
+    
+    // Get saved theme or default to black-red
+    const savedTheme = localStorage.getItem('streamerTheme') || 'black-red';
+    
+    streamerWindow.document.write(`
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Soul Link Teams - Streamer Mode</title>
+            <style>
+                @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+                
+                * {
+                    margin: 0;
+                    padding: 0;
+                    box-sizing: border-box;
+                    image-rendering: pixelated;
+                    image-rendering: -moz-crisp-edges;
+                    image-rendering: crisp-edges;
+                }
+                
+                body {
+                    font-family: 'Press Start 2P', monospace;
+                    padding: 10px;
+                    font-size: 8px;
+                    line-height: 1.4;
+                    overflow: hidden;
+                    transition: all 0.3s ease;
+                }
+                
+                .theme-selector {
+                    position: absolute;
+                    top: 5px;
+                    left: 10px;
+                    z-index: 100;
+                    display: flex;
+                    gap: 10px;
+                    align-items: center;
+                }
+                
+                .theme-select, .sprite-size-select {
+                    background: rgba(0, 0, 0, 0.8);
+                    color: white;
+                    border: 1px solid rgba(255, 255, 255, 0.3);
+                    padding: 2px 4px;
+                    font-family: 'Press Start 2P', monospace;
+                    font-size: 6px;
+                    border-radius: 3px;
+                    cursor: pointer;
+                }
+                
+                .theme-select:focus, .sprite-size-select:focus {
+                    outline: none;
+                    border-color: var(--accent-color);
+                }
+                
+                .selector-label {
+                    color: rgba(255, 255, 255, 0.8);
+                    font-size: 5px;
+                    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+                }
+                
+                .streamer-container {
+                    display: flex;
+                    gap: 20px;
+                    height: 100%;
+                    align-items: center;
+                    margin-top: 25px;
+                }
+                
+                .team-section {
+                    flex: 1;
+                    background: rgba(255, 255, 255, 0.1);
+                    border-radius: 8px;
+                    padding: 8px;
+                    backdrop-filter: blur(5px);
+                    transition: all 0.3s ease;
+                }
+                
+                .team-header {
+                    text-align: center;
+                    margin-bottom: 8px;
+                    font-size: 10px;
+                    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+                    transition: color 0.3s ease;
+                }
+                
+                .team-pokemon {
+                    display: flex;
+                    justify-content: space-between;
+                    gap: 4px;
+                    flex-wrap: nowrap;
+                    width: 100%;
+                }
+                
+                .pokemon-slot {
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    min-width: 60px;
+                    position: relative;
+                }
+                
+                .pokemon-sprite {
+                    image-rendering: pixelated;
+                    border: 1px solid rgba(255, 255, 255, 0.3);
+                    border-radius: 4px;
+                    background: rgba(255, 255, 255, 0.1);
+                    transition: border-color 0.3s ease;
+                    position: relative;
+                    z-index: 5;
+                }
+                
+                .sprite-small {
+                    width: 40px;
+                    height: 40px;
+                }
+                
+                .sprite-medium {
+                    width: 48px;
+                    height: 48px;
+                }
+                
+                .sprite-large {
+                    width: 64px;
+                    height: 64px;
+                }
+                
+                .sprite-xl {
+                    width: 80px;
+                    height: 80px;
+                }
+                
+                .sprite-auto {
+                    width: calc(8vw - 10px);
+                    height: calc(8vw - 10px);
+                    min-width: 32px;
+                    min-height: 32px;
+                    max-width: 100px;
+                    max-height: 100px;
+                }
+                
+                .pokemon-name {
+                    font-size: 6px;
+                    text-align: center;
+                    margin-top: 2px;
+                    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+                    max-width: 60px;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    white-space: nowrap;
+                }
+                
+                .pokemon-types {
+                    display: flex;
+                    gap: 1px;
+                    margin-top: 1px;
+                    justify-content: center;
+                }
+                
+                .type-badge {
+                    padding: 1px 3px;
+                    border-radius: 2px;
+                    font-size: 4px;
+                    color: #fff;
+                    text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.5);
+                    min-width: 20px;
+                    text-align: center;
+                }
+                
+                .empty-slot {
+                    width: 48px;
+                    height: 48px;
+                    border: 1px dashed rgba(255, 255, 255, 0.3);
+                    border-radius: 4px;
+                    background: rgba(255, 255, 255, 0.05);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-size: 6px;
+                    color: rgba(255, 255, 255, 0.5);
+                    transition: border-color 0.3s ease;
+                }
+                
+                .fainted {
+                    opacity: 0.5;
+                    filter: grayscale(100%);
+                }
+                
+                .fainted-overlay {
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    bottom: 0;
+                    background: rgba(231, 76, 60, 0.8);
+                    color: white;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-size: 4px;
+                    border-radius: 4px;
+                    z-index: 10;
+                }
+                
+                .generation-info {
+                    position: absolute;
+                    top: 5px;
+                    right: 10px;
+                    color: white;
+                    padding: 2px 6px;
+                    border-radius: 4px;
+                    font-size: 6px;
+                    text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.5);
+                    transition: background 0.3s ease;
+                }
+                
+                /* Type colors */
+                .type-normal { background: #a8a878; }
+                .type-fire { background: #f08030; }
+                .type-water { background: #6890f0; }
+                .type-electric { background: #f8d030; }
+                .type-grass { background: #78c850; }
+                .type-ice { background: #98d8d8; }
+                .type-fighting { background: #c03028; }
+                .type-poison { background: #a040a0; }
+                .type-ground { background: #e0c068; }
+                .type-flying { background: #a890f0; }
+                .type-psychic { background: #f85888; }
+                .type-bug { background: #a8b820; }
+                .type-rock { background: #b8a038; }
+                .type-ghost { background: #705898; }
+                .type-dragon { background: #7038f8; }
+                .type-dark { background: #705848; }
+                .type-steel { background: #b8b8d0; }
+                .type-fairy { background: #ee99ac; }
+            </style>
+        </head>
+        <body>
+            <div class="theme-selector">
+                <div>
+                    <div class="selector-label">Theme:</div>
+                    <select class="theme-select" id="theme-selector" onchange="changeTheme(this.value)">
+                        ${Object.entries(streamerThemes).map(([key, theme]) => 
+                            `<option value="${key}" ${key === savedTheme ? 'selected' : ''}>${theme.name}</option>`
+                        ).join('')}
+                    </select>
+                </div>
+                <div>
+                    <div class="selector-label">Sprite Size:</div>
+                    <select class="sprite-size-select" id="sprite-size-selector" onchange="changeSpriteSize(this.value)">
+                        <option value="auto">Auto Scale</option>
+                        <option value="small">Small</option>
+                        <option value="medium" selected>Medium</option>
+                        <option value="large">Large</option>
+                        <option value="xl">XL</option>
+                    </select>
+                </div>
+            </div>
+            <div class="generation-info" id="streamer-gen-info">Gen I</div>
+            <div class="streamer-container">
+                <div class="team-section">
+                    <div class="team-header" id="streamer-player1-name">Player 1</div>
+                    <div class="team-pokemon" id="streamer-team1"></div>
+                </div>
+                <div class="team-section">
+                    <div class="team-header" id="streamer-player2-name">Player 2</div>
+                    <div class="team-pokemon" id="streamer-team2"></div>
+                </div>
+            </div>
+            
+            <script>
+                function changeTheme(themeKey) {
+                    const themes = ${JSON.stringify(streamerThemes)};
+                    const theme = themes[themeKey];
+                    
+                    if (theme) {
+                        // Update CSS variables and styles
+                        document.body.style.background = theme.background;
+                        document.body.style.color = theme.text;
+                        
+                        // Update team sections
+                        const teamSections = document.querySelectorAll('.team-section');
+                        teamSections.forEach(section => {
+                            section.style.border = '2px solid ' + theme.accent;
+                        });
+                        
+                        // Update team headers
+                        const teamHeaders = document.querySelectorAll('.team-header');
+                        teamHeaders.forEach(header => {
+                            header.style.color = theme.accent;
+                        });
+                        
+                        // Update generation info background
+                        const genInfo = document.getElementById('streamer-gen-info');
+                        if (genInfo) {
+                            genInfo.style.background = theme.genBg;
+                            genInfo.style.color = theme.genBg.includes('fff') ? '#000' : '#fff';
+                        }
+                        
+                        // Update sprite borders for accent color
+                        const sprites = document.querySelectorAll('.pokemon-sprite, .empty-slot');
+                        sprites.forEach(sprite => {
+                            sprite.style.borderColor = theme.accent + '80'; // 50% opacity
+                        });
+                        
+                        // Save theme preference to parent window
+                        if (window.opener && window.opener.localStorage) {
+                            window.opener.localStorage.setItem('streamerTheme', themeKey);
+                        }
+                    }
+                }
+                
+                function changeSpriteSize(sizeKey) {
+                    // Remove all existing sprite size classes
+                    const sprites = document.querySelectorAll('.pokemon-sprite');
+                    sprites.forEach(sprite => {
+                        sprite.classList.remove('sprite-small', 'sprite-medium', 'sprite-large', 'sprite-xl', 'sprite-auto');
+                        sprite.classList.add('sprite-' + sizeKey);
+                    });
+                    
+                    // Update empty slots to match
+                    const emptySlots = document.querySelectorAll('.empty-slot');
+                    emptySlots.forEach(slot => {
+                        slot.classList.remove('sprite-small', 'sprite-medium', 'sprite-large', 'sprite-xl', 'sprite-auto');
+                        slot.classList.add('sprite-' + sizeKey);
+                        
+                        // Update empty slot dimensions to match sprite size
+                        if (sizeKey !== 'auto') {
+                            const sizes = {
+                                'small': '40px',
+                                'medium': '48px',
+                                'large': '64px',
+                                'xl': '80px'
+                            };
+                            slot.style.width = sizes[sizeKey];
+                            slot.style.height = sizes[sizeKey];
+                        } else {
+                            // For auto scaling, remove inline styles to let CSS handle it
+                            slot.style.width = '';
+                            slot.style.height = '';
+                        }
+                    });
+                    
+                    // Save sprite size preference to parent window
+                    if (window.opener && window.opener.localStorage) {
+                        window.opener.localStorage.setItem('streamerSpriteSize', sizeKey);
+                    }
+                }
+                
+                // Apply saved theme and sprite size on load
+                document.addEventListener('DOMContentLoaded', function() {
+                    const themeSelector = document.getElementById('theme-selector');
+                    const spriteSizeSelector = document.getElementById('sprite-size-selector');
+                    
+                    if (themeSelector) {
+                        changeTheme(themeSelector.value);
+                    }
+                    
+                    // Load saved sprite size
+                    if (window.opener && window.opener.localStorage) {
+                        const savedSpriteSize = window.opener.localStorage.getItem('streamerSpriteSize') || 'medium';
+                        spriteSizeSelector.value = savedSpriteSize;
+                        changeSpriteSize(savedSpriteSize);
+                    }
+                });
+            </script>
+        </body>
+        </html>
+    `);
+    
+    streamerWindow.document.close();
+    
+    // Initial render
+    updateStreamerWindow();
+    
+    // Set up periodic updates
+    if (window.streamerUpdateInterval) {
+        clearInterval(window.streamerUpdateInterval);
+    }
+    
+    window.streamerUpdateInterval = setInterval(() => {
+        if (streamerWindow && !streamerWindow.closed) {
+            updateStreamerWindow();
+        } else {
+            clearInterval(window.streamerUpdateInterval);
+            window.streamerUpdateInterval = null;
+        }
+    }, 1000);
+    
+    // Handle window close
+    streamerWindow.addEventListener('beforeunload', () => {
+        if (window.streamerUpdateInterval) {
+            clearInterval(window.streamerUpdateInterval);
+            window.streamerUpdateInterval = null;
+        }
+        streamerWindow = null;
+    });
+}
+
+// Update the streamer window with current team data
+function updateStreamerWindow() {
+    if (!streamerWindow || streamerWindow.closed) return;
+    
+    try {
+        const doc = streamerWindow.document;
+        
+        // Update generation info
+        const genInfo = doc.getElementById('streamer-gen-info');
+        if (genInfo && gameData.currentGeneration) {
+            const genDisplay = generationRomanNumerals[gameData.currentGeneration] || gameData.currentGeneration;
+            genInfo.textContent = `Gen ${genDisplay}`;
+        }
+        
+        // Update player names
+        const player1Header = doc.getElementById('streamer-player1-name');
+        const player2Header = doc.getElementById('streamer-player2-name');
+        if (player1Header) player1Header.textContent = gameData.playerNames.player1 + "'s Team";
+        if (player2Header) player2Header.textContent = gameData.playerNames.player2 + "'s Team";
+        
+        // Update teams
+        updateStreamerTeam(1, doc);
+        updateStreamerTeam(2, doc);
+    } catch (error) {
+        console.log('Streamer window update failed:', error);
+    }
+}
+
+// Update a specific team in the streamer window
+function updateStreamerTeam(playerNum, doc) {
+    const container = doc.getElementById(`streamer-team${playerNum}`);
+    if (!container) return;
+    
+    const team = gameData[`player${playerNum}`].team;
+    container.innerHTML = '';
+    
+    // Get saved sprite size
+    const savedSpriteSize = localStorage.getItem('streamerSpriteSize') || 'medium';
+    
+    for (let i = 0; i < 6; i++) {
+        const pokemon = team[i];
+        const slotDiv = doc.createElement('div');
+        slotDiv.className = 'pokemon-slot';
+        
+        if (pokemon) {
+            const isFainted = pokemon.fainted;
+            
+            slotDiv.innerHTML = `
+                <div class="${isFainted ? 'fainted' : ''}" style="position: relative;">
+                    <img src="${pokemon.animatedSprite || pokemon.sprite}" 
+                         class="pokemon-sprite sprite-${savedSpriteSize}" 
+                         onerror="this.src='https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/0.png'"
+                         alt="${pokemon.nickname}">
+                    ${isFainted ? '<div class="fainted-overlay">KO</div>' : ''}
+                </div>
+                <div class="pokemon-name">${pokemon.nickname}</div>
+                <div class="pokemon-types">
+                    ${pokemon.types.slice(0, 2).map(type => 
+                        `<span class="type-badge type-${type}">${type.substring(0, 3).toUpperCase()}</span>`
+                    ).join('')}
+                </div>
+            `;
+        } else {
+            slotDiv.innerHTML = `<div class="empty-slot sprite-${savedSpriteSize}">Empty</div>`;
+        }
+        
+        container.appendChild(slotDiv);
+    }
+}
 
 // Make toast testing function available globally for debugging
 window.testToast = testToast;

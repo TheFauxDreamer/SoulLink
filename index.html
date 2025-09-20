@@ -1391,6 +1391,8 @@
                 <button onclick="importData()">Import Save</button>
                 <button onclick="suggestFullTeams()"
                     style="background: #9b59b6; color: white; border-color: #8e44ad;">Suggest Full Teams</button>
+                <button onclick="openStreamerMode()"
+                    style="background: #8e44ad; color: white; border-color: #7d3c98; line-height: 1.2; height: 34px; vertical-align: top;">📺 Streamer Mode</button>
                 <input type="file" id="importFile" style="display:none" accept=".json">
             </div>
             <button class="strict-mode-btn" id="strict-mode-btn" onclick="toggleStrictMode()"
@@ -1451,7 +1453,7 @@
                 <div>
                     <div class="player-header">
                         <h3 id="player1-team-header">Player 1 Team</h3>
-                        <button class="edit-btn" onclick="editPlayerName(1)">âœï¸</button>
+                        <button class="edit-btn" onclick="editPlayerName(1)">✏️</button>
                     </div>
                     <div class="team-slots" id="player1-team">
                         <div class="team-slot" data-slot="0" onclick="clearTeamSlot(1, 0)">Empty</div>
@@ -1466,7 +1468,7 @@
                 <div>
                     <div class="player-header">
                         <h3 id="player2-team-header">Player 2 Team</h3>
-                        <button class="edit-btn" onclick="editPlayerName(2)">âœï¸</button>
+                        <button class="edit-btn" onclick="editPlayerName(2)">✏️</button>
                     </div>
                     <div class="team-slots" id="player2-team">
                         <div class="team-slot" data-slot="0" onclick="clearTeamSlot(2, 0)">Empty</div>
