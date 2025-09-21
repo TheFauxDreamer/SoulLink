@@ -2321,23 +2321,11 @@ function renderAvailablePokemon() {
 function saveData() {
     localStorage.setItem('soulLinkDataMultiGen', JSON.stringify(gameData));
 
-    // Always try to update streamer window when data is saved
+    // Trigger smart update instead of full update
     if (streamerWindow && !streamerWindow.closed) {
-        try {
-            updateStreamerWindow();
-        } catch (error) {
-            console.log('Streamer window update failed in saveData:', error);
-            // If update fails, the window might be in a bad state, try to refresh it
-            setTimeout(() => {
-                if (streamerWindow && !streamerWindow.closed) {
-                    try {
-                        updateStreamerWindow();
-                    } catch (retryError) {
-                        console.log('Streamer window retry update also failed:', retryError);
-                    }
-                }
-            }, 500);
-        }
+        setTimeout(() => {
+            updateStreamerWindowSmart();
+        }, 50); // Small delay to ensure data is saved
     }
 }
 
@@ -3067,6 +3055,16 @@ const streamerThemes = {
     }
 };
 
+// Track previous state to avoid unnecessary updates
+let previousStreamerState = {
+    generation: null,
+    player1Name: null,
+    player2Name: null,
+    team1: [],
+    team2: [],
+    gymProgress: null
+};
+
 // Setup the streamer window content and styling
 function setupStreamerWindow() {
     if (!streamerWindow) return;
@@ -3155,7 +3153,6 @@ function setupStreamerWindow() {
                     text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
                 }
                 
-                /* Show hint when controls are hidden */
                 .controls-hint {
                     position: absolute;
                     top: 8px;
@@ -3296,6 +3293,7 @@ function setupStreamerWindow() {
                     align-items: center;
                     min-width: 60px;
                     position: relative;
+                    transition: opacity 0.3s ease;
                 }
                 
                 .pokemon-sprite {
@@ -3501,15 +3499,13 @@ function setupStreamerWindow() {
                     
                     function resetHideTimer() {
                         clearTimeout(hideTimeout);
-                        hideTimeout = setTimeout(hideControls, 5000); // Hide after 5 seconds
+                        hideTimeout = setTimeout(hideControls, 5000);
                     }
                     
-                    // Show controls on hover
                     if (themeSelector) {
                         themeSelector.addEventListener('mouseenter', showControls);
                         themeSelector.addEventListener('mousemove', showControls);
                         
-                        // Also show controls when interacting with dropdowns
                         const selects = themeSelector.querySelectorAll('select');
                         selects.forEach(select => {
                             select.addEventListener('focus', showControls);
@@ -3517,19 +3513,16 @@ function setupStreamerWindow() {
                         });
                     }
                     
-                    // Show controls when hovering over the hint area
                     if (controlsHint) {
                         controlsHint.addEventListener('mouseenter', showControls);
                     }
                     
-                    // Also show controls if mouse is in the top-left corner
                     document.addEventListener('mousemove', function(e) {
                         if (e.clientX < 200 && e.clientY < 40) {
                             showControls();
                         }
                     });
                     
-                    // Start the initial hide timer
                     resetHideTimer();
                 }
                 
@@ -3538,23 +3531,19 @@ function setupStreamerWindow() {
                     const theme = themes[themeKey];
                     
                     if (theme) {
-                        // Update CSS variables and styles
                         document.body.style.background = theme.background;
                         document.body.style.color = theme.text;
                         
-                        // Update team sections
                         const teamSections = document.querySelectorAll('.team-section');
                         teamSections.forEach(section => {
                             section.style.border = '2px solid ' + theme.accent;
                         });
                         
-                        // Update team headers
                         const teamHeaders = document.querySelectorAll('.team-header');
                         teamHeaders.forEach(header => {
                             header.style.color = theme.accent;
                         });
                         
-                        // Update pokemon names - remove text shadow for white-pink theme
                         const pokemonNames = document.querySelectorAll('.pokemon-name');
                         pokemonNames.forEach(nameEl => {
                             if (themeKey === 'white-pink') {
@@ -3564,26 +3553,22 @@ function setupStreamerWindow() {
                             }
                         });
                         
-                        // Update generation info background
                         const genInfo = document.getElementById('streamer-gen-info');
                         if (genInfo) {
                             genInfo.style.background = theme.genBg;
                             genInfo.style.color = theme.genBg.includes('fff') ? '#000' : '#fff';
                         }
                         
-                        // Update gym progress bar
                         const gymProgressBar = document.getElementById('gym-progress-bar');
                         if (gymProgressBar) {
                             gymProgressBar.style.borderColor = theme.accent + '80';
                         }
                         
-                        // Update sprite borders for accent color
                         const sprites = document.querySelectorAll('.pokemon-sprite, .empty-slot');
                         sprites.forEach(sprite => {
-                            sprite.style.borderColor = theme.accent + '80'; // 50% opacity
+                            sprite.style.borderColor = theme.accent + '80';
                         });
                         
-                        // Save theme preference to parent window
                         if (window.opener && window.opener.localStorage) {
                             window.opener.localStorage.setItem('streamerTheme', themeKey);
                         }
@@ -3591,20 +3576,17 @@ function setupStreamerWindow() {
                 }
                 
                 function changeSpriteSize(sizeKey) {
-                    // Remove all existing sprite size classes
                     const sprites = document.querySelectorAll('.pokemon-sprite');
                     sprites.forEach(sprite => {
                         sprite.classList.remove('sprite-small', 'sprite-medium', 'sprite-large', 'sprite-xl', 'sprite-auto');
                         sprite.classList.add('sprite-' + sizeKey);
                     });
                     
-                    // Update empty slots to match
                     const emptySlots = document.querySelectorAll('.empty-slot');
                     emptySlots.forEach(slot => {
                         slot.classList.remove('sprite-small', 'sprite-medium', 'sprite-large', 'sprite-xl', 'sprite-auto');
                         slot.classList.add('sprite-' + sizeKey);
                         
-                        // Update empty slot dimensions to match sprite size
                         if (sizeKey !== 'auto') {
                             const sizes = {
                                 'small': '40px',
@@ -3615,19 +3597,16 @@ function setupStreamerWindow() {
                             slot.style.width = sizes[sizeKey];
                             slot.style.height = sizes[sizeKey];
                         } else {
-                            // For auto scaling, remove inline styles to let CSS handle it
                             slot.style.width = '';
                             slot.style.height = '';
                         }
                     });
                     
-                    // Save sprite size preference to parent window
                     if (window.opener && window.opener.localStorage) {
                         window.opener.localStorage.setItem('streamerSpriteSize', sizeKey);
                     }
                 }
                 
-                // Apply saved theme and sprite size on load
                 document.addEventListener('DOMContentLoaded', function() {
                     const themeSelector = document.getElementById('theme-selector');
                     const spriteSizeSelector = document.getElementById('sprite-size-selector');
@@ -3636,14 +3615,12 @@ function setupStreamerWindow() {
                         changeTheme(themeSelector.value);
                     }
                     
-                    // Load saved sprite size
                     if (window.opener && window.opener.localStorage) {
                         const savedSpriteSize = window.opener.localStorage.getItem('streamerSpriteSize') || 'medium';
                         spriteSizeSelector.value = savedSpriteSize;
                         changeSpriteSize(savedSpriteSize);
                     }
                     
-                    // Initialize auto-hide functionality
                     initializeAutoHide();
                 });
             </script>
@@ -3653,22 +3630,32 @@ function setupStreamerWindow() {
 
     streamerWindow.document.close();
 
+    // Reset previous state tracking
+    previousStreamerState = {
+        generation: null,
+        player1Name: null,
+        player2Name: null,
+        team1: [],
+        team2: [],
+        gymProgress: null
+    };
+
     // Initial render
     updateStreamerWindow();
 
-    // Set up periodic updates
+    // Set up periodic updates with longer interval and smart updating
     if (window.streamerUpdateInterval) {
         clearInterval(window.streamerUpdateInterval);
     }
 
     window.streamerUpdateInterval = setInterval(() => {
         if (streamerWindow && !streamerWindow.closed) {
-            updateStreamerWindow();
+            updateStreamerWindowSmart();
         } else {
             clearInterval(window.streamerUpdateInterval);
             window.streamerUpdateInterval = null;
         }
-    }, 1000);
+    }, 2000); // Reduced to 2 seconds instead of 1
 
     // Handle window close
     streamerWindow.addEventListener('beforeunload', () => {
@@ -3679,6 +3666,153 @@ function setupStreamerWindow() {
         streamerWindow = null;
     });
 }
+
+function updateStreamerWindowSmart() {
+    if (!streamerWindow || streamerWindow.closed) return;
+
+    try {
+        const doc = streamerWindow.document;
+
+        if (!doc || doc.readyState !== 'complete') {
+            return;
+        }
+
+        // Collect current state
+        const currentState = {
+            generation: gameData.currentGeneration,
+            player1Name: gameData.playerNames.player1,
+            player2Name: gameData.playerNames.player2,
+            team1: gameData.player1.team.map(p => p ? {
+                id: p.id,
+                nickname: p.nickname,
+                sprite: p.animatedSprite || p.sprite,
+                types: p.types,
+                fainted: p.fainted,
+                isShiny: p.isShiny
+            } : null),
+            team2: gameData.player2.team.map(p => p ? {
+                id: p.id,
+                nickname: p.nickname,
+                sprite: p.animatedSprite || p.sprite,
+                types: p.types,
+                fainted: p.fainted,
+                isShiny: p.isShiny
+            } : null),
+            gymProgress: gameData.currentGame ? JSON.stringify(gameData.gymProgress[gameData.currentGame] || {}) : null
+        };
+
+        let hasChanges = false;
+
+        // Check for generation change
+        if (currentState.generation !== previousStreamerState.generation) {
+            updateStreamerGeneration(doc, currentState.generation);
+            hasChanges = true;
+        }
+
+        // Check for player name changes
+        if (currentState.player1Name !== previousStreamerState.player1Name) {
+            updateStreamerPlayerName(doc, 1, currentState.player1Name);
+            hasChanges = true;
+        }
+
+        if (currentState.player2Name !== previousStreamerState.player2Name) {
+            updateStreamerPlayerName(doc, 2, currentState.player2Name);
+            hasChanges = true;
+        }
+
+        // Check for team changes
+        if (JSON.stringify(currentState.team1) !== JSON.stringify(previousStreamerState.team1)) {
+            updateStreamerTeamSmart(1, doc, currentState.team1);
+            hasChanges = true;
+        }
+
+        if (JSON.stringify(currentState.team2) !== JSON.stringify(previousStreamerState.team2)) {
+            updateStreamerTeamSmart(2, doc, currentState.team2);
+            hasChanges = true;
+        }
+
+        // Check for gym progress changes
+        if (currentState.gymProgress !== previousStreamerState.gymProgress) {
+            updateStreamerGymProgress(doc);
+            hasChanges = true;
+        }
+
+        // Update previous state
+        previousStreamerState = currentState;
+
+        if (hasChanges) {
+            console.log('Streamer window updated (changes detected)');
+        }
+
+    } catch (error) {
+        console.error('Smart streamer window update failed:', error);
+    }
+}
+
+// Helper functions for targeted updates
+function updateStreamerGeneration(doc, generation) {
+    const genInfo = doc.getElementById('streamer-gen-info');
+    if (genInfo && generation) {
+        const genDisplay = generationRomanNumerals[generation] || generation;
+        genInfo.textContent = `Gen ${genDisplay}`;
+    }
+}
+
+function updateStreamerPlayerName(doc, playerNum, name) {
+    const header = doc.getElementById(`streamer-player${playerNum}-name`);
+    if (header) {
+        header.textContent = `${name}'s Team`;
+    }
+}
+
+// Smart team update that only changes what's different
+function updateStreamerTeamSmart(playerNum, doc, newTeam) {
+    const container = doc.getElementById(`streamer-team${playerNum}`);
+    if (!container) return;
+
+    const savedSpriteSize = localStorage.getItem('streamerSpriteSize') || 'medium';
+
+    // Get existing slots or create them
+    let existingSlots = container.querySelectorAll('.pokemon-slot');
+
+    // Ensure we have 6 slots
+    while (existingSlots.length < 6) {
+        const slotDiv = doc.createElement('div');
+        slotDiv.className = 'pokemon-slot';
+        container.appendChild(slotDiv);
+        existingSlots = container.querySelectorAll('.pokemon-slot');
+    }
+
+    // Update each slot individually
+    for (let i = 0; i < 6; i++) {
+        const slot = existingSlots[i];
+        const pokemon = newTeam[i];
+
+        if (pokemon) {
+            const isFainted = pokemon.fainted;
+            const isShiny = pokemon.isShiny;
+
+            slot.innerHTML = `
+                <div class="${isFainted ? 'fainted' : ''} ${isShiny ? 'shiny-pokemon' : ''}" style="position: relative;">
+                    <img src="${pokemon.sprite}" 
+                         class="pokemon-sprite sprite-${savedSpriteSize} ${isShiny ? 'shiny-border' : ''}" 
+                         onerror="this.src='https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/0.png'"
+                         alt="${pokemon.nickname}">
+                    ${isFainted ? '<div class="fainted-overlay">KO</div>' : ''}
+                </div>
+                <div class="pokemon-name">${pokemon.nickname}</div>
+                <div class="pokemon-types">
+                    ${pokemon.types.slice(0, 2).map(type =>
+                `<span class="type-badge type-${type}">${type.substring(0, 3).toUpperCase()}</span>`
+            ).join('')}
+                </div>
+            `;
+        } else {
+            slot.innerHTML = `<div class="empty-slot sprite-${savedSpriteSize}">Empty</div>`;
+        }
+    }
+}
+
 
 // Update the streamer window with current team data
 function updateStreamerWindow() {
