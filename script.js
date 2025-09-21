@@ -1582,6 +1582,32 @@ function findPokemonById(pokemonId) {
     return null;
 }
 
+// Helper function to compact a team array (remove nulls and shift remaining Pokemon up)
+function compactTeam(team) {
+    const compacted = team.filter(pokemon => pokemon !== null);
+    // Fill the rest with nulls to maintain 6-slot structure
+    while (compacted.length < 6) {
+        compacted.push(null);
+    }
+    return compacted;
+}
+
+// Helper function to compact both teams simultaneously while preserving soul links
+function compactBothTeams() {
+    // Store original team states
+    const originalTeam1 = [...gameData.player1.team];
+    const originalTeam2 = [...gameData.player2.team];
+
+    // Compact both teams
+    gameData.player1.team = compactTeam(originalTeam1);
+    gameData.player2.team = compactTeam(originalTeam2);
+
+    console.log('Teams compacted:', {
+        player1: gameData.player1.team.filter(p => p).map(p => p.nickname),
+        player2: gameData.player2.team.filter(p => p).map(p => p.nickname)
+    });
+}
+
 // Faint a Pokemon and its soul link partner
 function faintPokemon(player, pokemonId) {
     if (!confirm('Mark this Pokemon as fainted? This will also faint its soul-linked partner and remove both from all teams!')) return;
@@ -1634,6 +1660,9 @@ function faintPokemon(player, pokemonId) {
             }
         }
     });
+
+    // Auto-compact both teams after removal
+    compactBothTeams();
 
     saveData();
     renderAll();
@@ -1733,6 +1762,8 @@ function deletePokemon(player, pokemonId) {
 
     // Remove the clicked Pokemon from its player's data
     playerData.caught = playerData.caught.filter(p => p.id.toString() !== pokemonId.toString());
+
+    // Remove from team and mark for compaction
     playerData.team = playerData.team.map(p => p && p.id.toString() === pokemonId.toString() ? null : p);
 
     // If there's a soul-linked partner, remove it from the other player's data
@@ -1747,6 +1778,9 @@ function deletePokemon(player, pokemonId) {
         link.pokemon1.id.toString() !== pokemonId.toString() && link.pokemon2.id.toString() !== pokemonId.toString()
     );
 
+    // Auto-compact both teams after deletion
+    compactBothTeams();
+
     saveData();
     populateRoutes();
     renderAll();
@@ -1758,6 +1792,7 @@ function deletePokemon(player, pokemonId) {
         showToast(`Deleted ${pokemon.nickname}`, 'info');
     }
 }
+
 
 // Clear team slot
 function clearTeamSlot(player, slot) {
@@ -1792,6 +1827,9 @@ function clearTeamSlot(player, slot) {
                     }
                 }
             }
+
+            // Auto-compact both teams after removal
+            compactBothTeams();
 
             saveData();
             renderAll();
@@ -1923,8 +1961,12 @@ function addToTeam(player, pokemon) {
         return;
     }
 
-    // Check if team is full
-    if (team.every(slot => slot !== null)) {
+    // Auto-compact team first to ensure no gaps
+    gameData[`player${player}`].team = compactTeam(team);
+    const compactedTeam = gameData[`player${player}`].team;
+
+    // Check if team is full after compacting
+    if (compactedTeam.every(slot => slot !== null)) {
         showToast(`${gameData.playerNames[`player${player}`]}'s team is full!`, 'error');
         return;
     }
@@ -1939,21 +1981,25 @@ function addToTeam(player, pokemon) {
         const otherPlayer = player === 1 ? 2 : 1;
         const otherTeam = gameData[`player${otherPlayer}`].team;
 
+        // Auto-compact other team too
+        gameData[`player${otherPlayer}`].team = compactTeam(otherTeam);
+        const compactedOtherTeam = gameData[`player${otherPlayer}`].team;
+
         // Check if either Pokemon is already in their respective teams
-        if (otherTeam.some(p => p && p.id.toString() === linkedPokemon.id.toString())) {
+        if (compactedOtherTeam.some(p => p && p.id.toString() === linkedPokemon.id.toString())) {
             showToast('The soul-linked partner is already on the other team!', 'error');
             return;
         }
 
         // Check if other player's team is full
-        if (otherTeam.every(slot => slot !== null)) {
+        if (compactedOtherTeam.every(slot => slot !== null)) {
             showToast(`Cannot add soul-linked pair: ${gameData.playerNames[`player${otherPlayer}`]}'s team is full!`, 'error');
             return;
         }
 
         // Check type conflicts for both Pokemon
-        const currentConflict = getTypeConflictMessage(pokemon, team, player);
-        const linkedConflict = getTypeConflictMessage(linkedPokemon, otherTeam, otherPlayer);
+        const currentConflict = getTypeConflictMessage(pokemon, compactedTeam, player);
+        const linkedConflict = getTypeConflictMessage(linkedPokemon, compactedOtherTeam, otherPlayer);
 
         if (currentConflict && linkedConflict) {
             showToast(`Cannot add soul-linked pair: ${pokemon.nickname} (${currentConflict}), ${linkedPokemon.nickname} (${linkedConflict})`, 'error');
@@ -1966,12 +2012,12 @@ function addToTeam(player, pokemon) {
             return;
         }
 
-        // Both Pokemon pass all checks - add them to their respective teams
-        const emptySlot = team.findIndex(slot => slot === null);
-        const otherEmptySlot = otherTeam.findIndex(slot => slot === null);
+        // Both Pokemon pass all checks - add them to first available slots
+        const emptySlot = compactedTeam.findIndex(slot => slot === null);
+        const otherEmptySlot = compactedOtherTeam.findIndex(slot => slot === null);
 
-        team[emptySlot] = pokemon;
-        otherTeam[otherEmptySlot] = linkedPokemon;
+        compactedTeam[emptySlot] = pokemon;
+        compactedOtherTeam[otherEmptySlot] = linkedPokemon;
 
         saveData();
         renderAll();
@@ -1980,19 +2026,20 @@ function addToTeam(player, pokemon) {
     }
 
     // If not linked, check for type conflicts on current team only
-    const conflict = getTypeConflictMessage(pokemon, team, player);
+    const conflict = getTypeConflictMessage(pokemon, compactedTeam, player);
     if (conflict) {
         showToast(`Cannot add ${pokemon.nickname}: ${conflict}`, 'error');
         return;
     }
 
-    // Add single Pokemon to team
-    const emptySlot = team.findIndex(slot => slot === null);
-    team[emptySlot] = pokemon;
+    // Add single Pokemon to first available slot
+    const emptySlot = compactedTeam.findIndex(slot => slot === null);
+    compactedTeam[emptySlot] = pokemon;
     saveData();
     renderAll();
     showToast(`Added ${pokemon.nickname} to ${gameData.playerNames[`player${player}`]}'s team!`, 'success');
 }
+
 
 // Render available Pokemon for team building
 function renderAvailablePokemon() {
@@ -3063,6 +3110,21 @@ function setupStreamerWindow() {
                     display: flex;
                     gap: 10px;
                     align-items: center;
+                    transition: opacity 0.5s ease, transform 0.5s ease;
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+                
+                .theme-selector.hidden {
+                    opacity: 0;
+                    transform: translateY(-10px);
+                    pointer-events: none;
+                }
+                
+                .theme-selector:hover {
+                    opacity: 1 !important;
+                    transform: translateY(0) !important;
+                    pointer-events: auto !important;
                 }
                 
                 .theme-select, .sprite-size-select {
@@ -3074,6 +3136,7 @@ function setupStreamerWindow() {
                     font-size: 6px;
                     border-radius: 3px;
                     cursor: pointer;
+                    transition: all 0.3s ease;
                 }
                 
                 .theme-select:focus, .sprite-size-select:focus {
@@ -3081,10 +3144,32 @@ function setupStreamerWindow() {
                     border-color: var(--accent-color);
                 }
                 
+                .theme-select:hover, .sprite-size-select:hover {
+                    background: rgba(0, 0, 0, 0.9);
+                    border-color: rgba(255, 255, 255, 0.5);
+                }
+                
                 .selector-label {
                     color: rgba(255, 255, 255, 0.8);
                     font-size: 5px;
                     text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+                }
+                
+                /* Show hint when controls are hidden */
+                .controls-hint {
+                    position: absolute;
+                    top: 8px;
+                    left: 10px;
+                    color: rgba(255, 255, 255, 0.3);
+                    font-size: 4px;
+                    opacity: 0;
+                    transition: opacity 0.5s ease;
+                    pointer-events: none;
+                    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+                }
+                
+                .controls-hint.visible {
+                    opacity: 1;
                 }
                 
                 .gym-progress-bar {
@@ -3336,7 +3421,7 @@ function setupStreamerWindow() {
             </style>
         </head>
         <body>
-            <div class="theme-selector">
+            <div class="theme-selector" id="theme-selector-container">
                 <div>
                     <div class="selector-label">Theme:</div>
                     <select class="theme-select" id="theme-selector" onchange="changeTheme(this.value)">
@@ -3355,8 +3440,7 @@ function setupStreamerWindow() {
                         <option value="xl">XL</option>
                     </select>
                 </div>
-            </div>
-            
+            </div>            
             <div class="gym-progress-bar" id="gym-progress-bar">
                 <div class="gym-section">
                     <div class="gym-label">Gyms:</div>
@@ -3387,6 +3471,68 @@ function setupStreamerWindow() {
             </div>
             
             <script>
+                let hideTimeout;
+                let isControlsVisible = true;
+                
+                function initializeAutoHide() {
+                    const themeSelector = document.getElementById('theme-selector-container');
+                    const controlsHint = document.getElementById('controls-hint');
+                    
+                    function showControls() {
+                        if (themeSelector) {
+                            themeSelector.classList.remove('hidden');
+                            isControlsVisible = true;
+                        }
+                        if (controlsHint) {
+                            controlsHint.classList.remove('visible');
+                        }
+                        resetHideTimer();
+                    }
+                    
+                    function hideControls() {
+                        if (themeSelector) {
+                            themeSelector.classList.add('hidden');
+                            isControlsVisible = false;
+                        }
+                        if (controlsHint) {
+                            controlsHint.classList.add('visible');
+                        }
+                    }
+                    
+                    function resetHideTimer() {
+                        clearTimeout(hideTimeout);
+                        hideTimeout = setTimeout(hideControls, 5000); // Hide after 5 seconds
+                    }
+                    
+                    // Show controls on hover
+                    if (themeSelector) {
+                        themeSelector.addEventListener('mouseenter', showControls);
+                        themeSelector.addEventListener('mousemove', showControls);
+                        
+                        // Also show controls when interacting with dropdowns
+                        const selects = themeSelector.querySelectorAll('select');
+                        selects.forEach(select => {
+                            select.addEventListener('focus', showControls);
+                            select.addEventListener('change', showControls);
+                        });
+                    }
+                    
+                    // Show controls when hovering over the hint area
+                    if (controlsHint) {
+                        controlsHint.addEventListener('mouseenter', showControls);
+                    }
+                    
+                    // Also show controls if mouse is in the top-left corner
+                    document.addEventListener('mousemove', function(e) {
+                        if (e.clientX < 200 && e.clientY < 40) {
+                            showControls();
+                        }
+                    });
+                    
+                    // Start the initial hide timer
+                    resetHideTimer();
+                }
+                
                 function changeTheme(themeKey) {
                     const themes = ${JSON.stringify(streamerThemes)};
                     const theme = themes[themeKey];
@@ -3496,6 +3642,9 @@ function setupStreamerWindow() {
                         spriteSizeSelector.value = savedSpriteSize;
                         changeSpriteSize(savedSpriteSize);
                     }
+                    
+                    // Initialize auto-hide functionality
+                    initializeAutoHide();
                 });
             </script>
         </body>
