@@ -2,7 +2,7 @@
 
 A web-based Pokémon soul link tracker! Supports generations 1-7.
 
-Playing a Soul Link Nuzlocke with a friend? Trying to work out how on earth you'll keep track of the routes, Pokémon, if they've fainted, what gym you're up to, and what the optimal team is?
+Playing a Soul Link Nuzlocke with a friend? Trying to work out how on earth you'll keep track of the routes, Pokémon, if they've fainted, what gym you're up to, the current level cap, and what the optimal team is?
 
 You're in the right place!
 
