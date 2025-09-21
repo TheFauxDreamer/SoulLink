@@ -3057,7 +3057,7 @@ let previousStreamerState = {
     gymProgress: null
 };
 
-// Setup the streamer window content and styling
+// Setup the streamer window content and styling with level cap display
 function setupStreamerWindow() {
     if (!streamerWindow) return;
 
@@ -3215,6 +3215,13 @@ function setupStreamerWindow() {
                     color: #FF9800;
                     border: 1px solid rgba(255, 152, 0, 0.5);
                     animation: championGlow 2s ease-in-out infinite alternate;
+                }
+                
+                .gym-counter.level-cap {
+                    color: #2196F3;
+                    border: 1px solid rgba(33, 150, 243, 0.5);
+                    font-weight: bold;
+                    min-width: 30px;
                 }
                 
                 .gym-divider {
@@ -3446,6 +3453,11 @@ function setupStreamerWindow() {
                     <div class="gym-label">Champ:</div>
                     <div class="gym-counter champion" id="champion-status">✗</div>
                 </div>
+                <div class="gym-divider"></div>
+                <div class="gym-section">
+                    <div class="gym-label">Level Cap:</div>
+                    <div class="gym-counter level-cap" id="level-cap-display">--</div>
+                </div>
             </div>
             
             <div class="generation-info" id="streamer-gen-info">Gen I</div>
@@ -3659,6 +3671,169 @@ function setupStreamerWindow() {
     });
 }
 
+// Function to update gym progress in streamer window with level cap display
+function updateStreamerGymProgress(doc) {
+    const gymData = getCurrentGymLeaders();
+    if (!gymData) {
+        // Hide gym progress if no gym data available
+        const gymProgressBar = doc.getElementById('gym-progress-bar');
+        if (gymProgressBar) {
+            gymProgressBar.style.display = 'none';
+        }
+        return;
+    }
+
+    const currentProgress = gameData.gymProgress[gameData.currentGame] || {};
+
+    // Show gym progress bar
+    const gymProgressBar = doc.getElementById('gym-progress-bar');
+    if (gymProgressBar) {
+        gymProgressBar.style.display = 'flex';
+    }
+
+    // Count completed gym leaders
+    const completedGyms = gymData.leaders.filter(leader => currentProgress[leader.id]).length;
+    const totalGyms = gymData.leaders.length;
+
+    // Count completed Kanto leaders if they exist
+    let completedKanto = 0;
+    let totalKanto = 0;
+    if (gymData.kantoLeaders) {
+        completedKanto = gymData.kantoLeaders.filter(leader => currentProgress[leader.id]).length;
+        totalKanto = gymData.kantoLeaders.length;
+    }
+
+    // Total gym count (main region + kanto if applicable)
+    const totalGymCount = totalGyms + totalKanto;
+    const completedGymCount = completedGyms + completedKanto;
+
+    // Count completed Elite Four (excluding champion)
+    const eliteFourMembers = gymData.eliteFour.filter(member => member.title !== 'Champion');
+    const completedEliteFour = eliteFourMembers.filter(member => currentProgress[member.id]).length;
+    const totalEliteFour = eliteFourMembers.length;
+
+    // Check if champion is defeated
+    const champion = gymData.eliteFour.find(member => member.title === 'Champion');
+    const championDefeated = champion ? currentProgress[champion.id] : false;
+
+    // Calculate current level cap
+    let currentLevelCap = '--';
+    let nextEncounter = null;
+
+    // Find the next undefeated encounter in order
+    // Check main region gym leaders first
+    if (!nextEncounter) {
+        for (const leader of gymData.leaders) {
+            if (!currentProgress[leader.id]) {
+                nextEncounter = leader;
+                break;
+            }
+        }
+    }
+
+    // Then check Kanto leaders if they exist and main region is complete
+    if (!nextEncounter && gymData.kantoLeaders && completedGyms === totalGyms) {
+        for (const leader of gymData.kantoLeaders) {
+            if (!currentProgress[leader.id]) {
+                nextEncounter = leader;
+                break;
+            }
+        }
+    }
+
+    // Then check Elite Four if all gyms are complete
+    if (!nextEncounter && completedGymCount === totalGymCount) {
+        for (const member of gymData.eliteFour) {
+            if (!currentProgress[member.id]) {
+                nextEncounter = member;
+                break;
+            }
+        }
+    }
+
+    // Set the level cap display
+    if (nextEncounter) {
+        currentLevelCap = nextEncounter.levelCap.toString();
+    } else if (championDefeated) {
+        // All completed, show final level cap or "Max"
+        if (champion) {
+            currentLevelCap = champion.levelCap.toString();
+        } else {
+            currentLevelCap = 'MAX';
+        }
+    }
+
+    // Update gym counter
+    const gymCountEl = doc.getElementById('gym-count');
+    if (gymCountEl) {
+        gymCountEl.textContent = `${completedGymCount}/${totalGymCount}`;
+
+        // Add completion styling
+        if (completedGymCount === totalGymCount && totalGymCount > 0) {
+            gymCountEl.style.background = 'rgba(76, 175, 80, 0.4)';
+            gymCountEl.style.color = '#4CAF50';
+        } else {
+            gymCountEl.style.background = 'rgba(255, 255, 255, 0.2)';
+            gymCountEl.style.color = '#4CAF50';
+        }
+    }
+
+    // Update Elite Four counter
+    const eliteFourCountEl = doc.getElementById('elite-four-count');
+    if (eliteFourCountEl) {
+        eliteFourCountEl.textContent = `${completedEliteFour}/${totalEliteFour}`;
+
+        // Add completion styling
+        if (completedEliteFour === totalEliteFour && totalEliteFour > 0) {
+            eliteFourCountEl.style.background = 'rgba(156, 39, 176, 0.4)';
+            eliteFourCountEl.style.color = '#9C27B0';
+        } else {
+            eliteFourCountEl.style.background = 'rgba(255, 255, 255, 0.2)';
+            eliteFourCountEl.style.color = '#9C27B0';
+        }
+    }
+
+    // Update Champion status
+    const championSection = doc.getElementById('champion-section');
+    const championStatusEl = doc.getElementById('champion-status');
+    if (championSection && championStatusEl && champion) {
+        championSection.style.display = 'flex';
+        championStatusEl.textContent = championDefeated ? '✓' : '✗';
+
+        if (championDefeated) {
+            championStatusEl.style.background = 'rgba(255, 152, 0, 0.4)';
+            championStatusEl.style.color = '#FF9800';
+        } else {
+            championStatusEl.style.background = 'rgba(255, 255, 255, 0.2)';
+            championStatusEl.style.color = '#FF9800';
+        }
+    } else if (championSection && !champion) {
+        championSection.style.display = 'none';
+    }
+
+    // Update Level Cap display
+    const levelCapEl = doc.getElementById('level-cap-display');
+    if (levelCapEl) {
+        levelCapEl.textContent = currentLevelCap;
+
+        // Add styling based on status
+        if (currentLevelCap === 'MAX') {
+            levelCapEl.style.background = 'rgba(76, 175, 80, 0.4)';
+            levelCapEl.style.color = '#4CAF50';
+            levelCapEl.style.fontWeight = 'bold';
+        } else if (currentLevelCap === '--') {
+            levelCapEl.style.background = 'rgba(255, 255, 255, 0.2)';
+            levelCapEl.style.color = '#2196F3';
+            levelCapEl.style.fontWeight = 'normal';
+        } else {
+            // Active level cap
+            levelCapEl.style.background = 'rgba(33, 150, 243, 0.4)';
+            levelCapEl.style.color = '#2196F3';
+            levelCapEl.style.fontWeight = 'bold';
+        }
+    }
+}
+
 function updateStreamerWindowSmart() {
     if (!streamerWindow || streamerWindow.closed) return;
 
@@ -3864,101 +4039,6 @@ function updateStreamerWindow() {
         }, 1000);
     }
 }
-
-// New function to update gym progress in streamer window
-function updateStreamerGymProgress(doc) {
-    const gymData = getCurrentGymLeaders();
-    if (!gymData) {
-        // Hide gym progress if no gym data available
-        const gymProgressBar = doc.getElementById('gym-progress-bar');
-        if (gymProgressBar) {
-            gymProgressBar.style.display = 'none';
-        }
-        return;
-    }
-
-    const currentProgress = gameData.gymProgress[gameData.currentGame] || {};
-
-    // Show gym progress bar
-    const gymProgressBar = doc.getElementById('gym-progress-bar');
-    if (gymProgressBar) {
-        gymProgressBar.style.display = 'flex';
-    }
-
-    // Count completed gym leaders
-    const completedGyms = gymData.leaders.filter(leader => currentProgress[leader.id]).length;
-    const totalGyms = gymData.leaders.length;
-
-    // Count completed Kanto leaders if they exist
-    let completedKanto = 0;
-    let totalKanto = 0;
-    if (gymData.kantoLeaders) {
-        completedKanto = gymData.kantoLeaders.filter(leader => currentProgress[leader.id]).length;
-        totalKanto = gymData.kantoLeaders.length;
-    }
-
-    // Total gym count (main region + kanto if applicable)
-    const totalGymCount = totalGyms + totalKanto;
-    const completedGymCount = completedGyms + completedKanto;
-
-    // Count completed Elite Four (excluding champion)
-    const eliteFourMembers = gymData.eliteFour.filter(member => member.title !== 'Champion');
-    const completedEliteFour = eliteFourMembers.filter(member => currentProgress[member.id]).length;
-    const totalEliteFour = eliteFourMembers.length;
-
-    // Check if champion is defeated
-    const champion = gymData.eliteFour.find(member => member.title === 'Champion');
-    const championDefeated = champion ? currentProgress[champion.id] : false;
-
-    // Update gym counter
-    const gymCountEl = doc.getElementById('gym-count');
-    if (gymCountEl) {
-        gymCountEl.textContent = `${completedGymCount}/${totalGymCount}`;
-
-        // Add completion styling
-        if (completedGymCount === totalGymCount && totalGymCount > 0) {
-            gymCountEl.style.background = 'rgba(76, 175, 80, 0.4)';
-            gymCountEl.style.color = '#4CAF50';
-        } else {
-            gymCountEl.style.background = 'rgba(255, 255, 255, 0.2)';
-            gymCountEl.style.color = '#4CAF50';
-        }
-    }
-
-    // Update Elite Four counter
-    const eliteFourCountEl = doc.getElementById('elite-four-count');
-    if (eliteFourCountEl) {
-        eliteFourCountEl.textContent = `${completedEliteFour}/${totalEliteFour}`;
-
-        // Add completion styling
-        if (completedEliteFour === totalEliteFour && totalEliteFour > 0) {
-            eliteFourCountEl.style.background = 'rgba(156, 39, 176, 0.4)';
-            eliteFourCountEl.style.color = '#9C27B0';
-        } else {
-            eliteFourCountEl.style.background = 'rgba(255, 255, 255, 0.2)';
-            eliteFourCountEl.style.color = '#9C27B0';
-        }
-    }
-
-    // Update Champion status
-    const championSection = doc.getElementById('champion-section');
-    const championStatusEl = doc.getElementById('champion-status');
-    if (championSection && championStatusEl && champion) {
-        championSection.style.display = 'flex';
-        championStatusEl.textContent = championDefeated ? '✓' : '✗';
-
-        if (championDefeated) {
-            championStatusEl.style.background = 'rgba(255, 152, 0, 0.4)';
-            championStatusEl.style.color = '#FF9800';
-        } else {
-            championStatusEl.style.background = 'rgba(255, 255, 255, 0.2)';
-            championStatusEl.style.color = '#FF9800';
-        }
-    } else if (championSection && !champion) {
-        championSection.style.display = 'none';
-    }
-}
-
 
 // Update a specific team in the streamer window
 function updateStreamerTeam(playerNum, doc) {
