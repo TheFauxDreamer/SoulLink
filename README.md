@@ -17,6 +17,7 @@ Try it out: https://soullink--laughing-lichterman-c3b6ff.netlify.app
 - **Generation validation** - only shows Pokémon that exist in your chosen game
 - **Streamer mode** - clean overlay window for streaming your run
 - **Import/export** - save your progress as a file to backup or share
+- **Strict Mode** - sick of poor coverage with old 1 type between both teams? Turn it off
 
 ## How it works
 
