@@ -79,6 +79,7 @@
                 transform: translateY(-100vh) rotateZ(0deg);
                 opacity: 1;
             }
+
             100% {
                 transform: translateY(100vh) rotateZ(720deg);
                 opacity: 0;
@@ -184,6 +185,7 @@
                 opacity: 0;
                 transform: translateY(-10px);
             }
+
             to {
                 opacity: 1;
                 transform: translateY(0);
@@ -379,6 +381,7 @@
             from {
                 box-shadow: 0 0 10px rgba(243, 156, 18, 0.5);
             }
+
             to {
                 box-shadow: 0 0 20px rgba(243, 156, 18, 0.8);
             }
@@ -400,11 +403,12 @@
         }
 
         @keyframes sparkleFloat {
-            0% { 
-                transform: translateY(0px) rotate(0deg); 
+            0% {
+                transform: translateY(0px) rotate(0deg);
             }
-            100% { 
-                transform: translateY(-3px) rotate(15deg); 
+
+            100% {
+                transform: translateY(-3px) rotate(15deg);
             }
         }
 
@@ -510,7 +514,7 @@
 
         .carousel-container {
             position: relative;
-            height: 300px;
+            height: 220px;
             margin-bottom: 20px;
             overflow: hidden;
             border-radius: 8px;
@@ -531,7 +535,7 @@
             background: linear-gradient(135deg, #ffffff 0%, #f0f8ff 100%);
             border: 3px solid #78c850;
             border-radius: 8px;
-            padding: 20px;
+            padding: 15px;
             position: relative;
         }
 
@@ -541,10 +545,10 @@
         }
 
         .generation-artwork {
-            width: 120px;
-            height: 120px;
+            width: 140px;
+            height: 140px;
             border-radius: 8px;
-            margin-bottom: 15px;
+            margin-bottom: 12px;
             object-fit: cover;
             border: 2px solid #2a5834;
         }
@@ -553,15 +557,8 @@
             text-align: center;
         }
 
-        .generation-number {
-            font-size: 32px;
-            color: #2a5834;
-            margin-bottom: 8px;
-            text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.1);
-        }
-
         .generation-name {
-            font-size: 14px;
+            font-size: 16px;
             color: #2a5834;
             margin-bottom: 8px;
             font-weight: bold;
@@ -1714,6 +1711,7 @@
                 transform: translateX(100%);
                 opacity: 0;
             }
+
             to {
                 transform: translateX(0);
                 opacity: 1;
@@ -1729,6 +1727,7 @@
                 opacity: 1;
                 transform: translateX(0);
             }
+
             to {
                 opacity: 0;
                 transform: translateX(100%);
@@ -1743,7 +1742,7 @@
                 width: auto;
                 max-width: none;
             }
-            
+
             .toast {
                 font-size: 9px;
                 padding: 10px 12px;
@@ -1764,7 +1763,7 @@
             <div class="carousel-container">
                 <button class="carousel-nav prev" onclick="previousGeneration()">&#8249;</button>
                 <button class="carousel-nav next" onclick="nextGeneration()">&#8250;</button>
-                
+
                 <div class="carousel-track" id="carousel-track">
                     <!-- Generation slides will be populated by JavaScript -->
                 </div>
@@ -1788,7 +1787,7 @@
     <div class="container">
         <!-- Toast notification container -->
         <div class="toast-container" id="toast-container"></div>
-        
+
         <h1>⚡️ Soul Link Nuzlocke Tracker ⚡️ <span id="generation-display" class="generation-badge"></span></h1>
 
         <div class="controls">
@@ -1803,7 +1802,8 @@
                 <button onclick="suggestFullTeams()"
                     style="background: #9b59b6; color: white; border-color: #8e44ad;">Suggest Full Teams</button>
                 <button onclick="openStreamerMode()"
-                    style="background: #8e44ad; color: white; border-color: #7d3c98; line-height: 1.2; height: 34px; vertical-align: top;">📺 Streamer Mode</button>
+                    style="background: #8e44ad; color: white; border-color: #7d3c98; line-height: 1.2; height: 34px; vertical-align: top;">📺
+                    Streamer Mode</button>
                 <input type="file" id="importFile" style="display:none" accept=".json">
             </div>
             <button class="strict-mode-btn" id="strict-mode-btn" onclick="toggleStrictMode()"
@@ -1828,7 +1828,7 @@
                     ▼
                 </button>
             </div>
-            
+
             <!-- Expandable Content -->
             <div class="gym-expandable-content" id="gym-expandable-content" style="display: none;">
                 <div class="progress-summary" id="progress-summary">
@@ -1865,7 +1865,8 @@
                     <div class="pokemon-inputs">
                         <div style="display: flex; gap: 10px; align-items: center;">
                             <div class="pokemon-input-wrapper" style="flex: 1;">
-                                <input type="text" id="player1-pokemon" placeholder="Pokemon name..." autocomplete="off">
+                                <input type="text" id="player1-pokemon" placeholder="Pokemon name..."
+                                    autocomplete="off">
                                 <div class="autocomplete-dropdown" id="player1-dropdown"></div>
                             </div>
                             <div class="shiny-checkbox-container">
@@ -1882,7 +1883,8 @@
                     <div class="pokemon-inputs">
                         <div style="display: flex; gap: 10px; align-items: center;">
                             <div class="pokemon-input-wrapper" style="flex: 1;">
-                                <input type="text" id="player2-pokemon" placeholder="Pokemon name..." autocomplete="off">
+                                <input type="text" id="player2-pokemon" placeholder="Pokemon name..."
+                                    autocomplete="off">
                                 <div class="autocomplete-dropdown" id="player2-dropdown"></div>
                             </div>
                             <div class="shiny-checkbox-container">

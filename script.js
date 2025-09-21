@@ -446,59 +446,52 @@ let pokemonCache = {};
 const generationData = [
     {
         id: 1,
-        roman: 'I',
         name: 'Kanto',
         fullName: 'Generation I',
         games: 'Red/Blue/Yellow',
-        artwork: 'https://images.wikidexcdn.net/mwuploads/wikidex/thumb/a/a2/latest/20160807181250/Artwork_Pok%C3%A9mon_Rojo_Azul.png/300px-Artwork_Pok%C3%A9mon_Rojo_Azul.png'
+        artwork: 'generationImages/gen1.png'
     },
     {
         id: 2,
-        roman: 'II',
         name: 'Johto',
         fullName: 'Generation II',
         games: 'Gold/Silver/Crystal',
-        artwork: 'https://images.wikidexcdn.net/mwuploads/wikidex/thumb/8/80/latest/20160807181359/Artwork_Pok%C3%A9mon_Oro_Plata.png/300px-Artwork_Pok%C3%A9mon_Oro_Plata.png'
+        artwork: 'generationImages/gen2.png'
     },
     {
         id: 3,
-        roman: 'III',
         name: 'Hoenn',
         fullName: 'Generation III',
         games: 'Ruby/Sapphire/Emerald & FireRed/LeafGreen',
-        artwork: 'https://images.wikidexcdn.net/mwuploads/wikidex/thumb/9/9c/latest/20160807181507/Artwork_Pok%C3%A9mon_Rub%C3%AD_Zafiro.png/300px-Artwork_Pok%C3%A9mon_Rub%C3%AD_Zafiro.png'
+        artwork: 'generationImages/gen3.png'
     },
     {
         id: 4,
-        roman: 'IV',
         name: 'Sinnoh',
         fullName: 'Generation IV',
         games: 'Diamond/Pearl/Platinum & HeartGold/SoulSilver',
-        artwork: 'https://images.wikidexcdn.net/mwuploads/wikidex/thumb/b/bf/latest/20160807181600/Artwork_Pok%C3%A9mon_Diamante_Perla.png/300px-Artwork_Pok%C3%A9mon_Diamante_Perla.png'
+        artwork: 'generationImages/gen4.png'
     },
     {
         id: 5,
-        roman: 'V',
         name: 'Unova',
         fullName: 'Generation V',
         games: 'Black/White/B2W2',
-        artwork: 'https://images.wikidexcdn.net/mwuploads/wikidex/thumb/5/52/latest/20160807181651/Artwork_Pok%C3%A9mon_Negro_Blanco.png/300px-Artwork_Pok%C3%A9mon_Negro_Blanco.png'
+        artwork: 'generationImages/gen5.png'
     },
     {
         id: 6,
-        roman: 'VI',
         name: 'Kalos',
         fullName: 'Generation VI',
         games: 'X/Y/ORAS',
-        artwork: 'https://images.wikidexcdn.net/mwuploads/wikidex/thumb/c/c7/latest/20160807181741/Artwork_Pok%C3%A9mon_X_Y.png/300px-Artwork_Pok%C3%A9mon_X_Y.png'
+        artwork: 'generationImages/gen6.png'
     },
     {
         id: 7,
-        roman: 'VII',
         name: 'Alola',
         fullName: 'Generation VII',
         games: 'Sun/Moon/USUM',
-        artwork: 'https://images.wikidexcdn.net/mwuploads/wikidex/thumb/1/1f/latest/20160807181825/Artwork_Pok%C3%A9mon_Sol_Luna.png/300px-Artwork_Pok%C3%A9mon_Sol_Luna.png'
+        artwork: 'generationImages/gen7.png'
     }
 ];
 
@@ -542,7 +535,6 @@ function initializeCarousel() {
                  class="generation-artwork"
                  onerror="this.src='https://via.placeholder.com/120x120/78c850/ffffff?text=Gen+${gen.roman}'">
             <div class="generation-info">
-                <div class="generation-number">${gen.roman}</div>
                 <div class="generation-name">${gen.fullName}</div>
                 <div class="generation-games">${gen.games}</div>
             </div>
