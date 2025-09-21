@@ -66,6 +66,80 @@ function initializeGymProgress() {
     }
 }
 
+// Calculate current level cap based on gym progress
+function getCurrentLevelCap() {
+    const gymData = getCurrentGymLeaders();
+    if (!gymData) return '--';
+
+    const currentProgress = gameData.gymProgress[gameData.currentGame] || {};
+
+    // Count completed gym leaders
+    const completedGyms = gymData.leaders.filter(leader => currentProgress[leader.id]).length;
+    const totalGyms = gymData.leaders.length;
+
+    // Count completed Kanto leaders if they exist
+    let completedKanto = 0;
+    let totalKanto = 0;
+    if (gymData.kantoLeaders) {
+        completedKanto = gymData.kantoLeaders.filter(leader => currentProgress[leader.id]).length;
+        totalKanto = gymData.kantoLeaders.length;
+    }
+
+    const totalGymCount = totalGyms + totalKanto;
+    const completedGymCount = completedGyms + completedKanto;
+
+    // Check if champion is defeated
+    const champion = gymData.eliteFour.find(member => member.title === 'Champion');
+    const championDefeated = champion ? currentProgress[champion.id] : false;
+
+    let nextEncounter = null;
+
+    // Find the next undefeated encounter in order
+    // Check main region gym leaders first
+    if (!nextEncounter) {
+        for (const leader of gymData.leaders) {
+            if (!currentProgress[leader.id]) {
+                nextEncounter = leader;
+                break;
+            }
+        }
+    }
+
+    // Then check Kanto leaders if they exist and main region is complete
+    if (!nextEncounter && gymData.kantoLeaders && completedGyms === totalGyms) {
+        for (const leader of gymData.kantoLeaders) {
+            if (!currentProgress[leader.id]) {
+                nextEncounter = leader;
+                break;
+            }
+        }
+    }
+
+    // Then check Elite Four if all gyms are complete
+    if (!nextEncounter && completedGymCount === totalGymCount) {
+        for (const member of gymData.eliteFour) {
+            if (!currentProgress[member.id]) {
+                nextEncounter = member;
+                break;
+            }
+        }
+    }
+
+    // Return the appropriate level cap
+    if (nextEncounter) {
+        return nextEncounter.levelCap.toString();
+    } else if (championDefeated) {
+        // All completed, show final level cap or "Max"
+        if (champion) {
+            return champion.levelCap.toString();
+        } else {
+            return 'MAX';
+        }
+    }
+
+    return '--';
+}
+
 function toggleGymTrackerExpanded() {
     gymTrackerExpanded = !gymTrackerExpanded;
 
@@ -95,9 +169,22 @@ function toggleGymTrackerExpanded() {
 
 function renderCompactProgressSummary() {
     const gymData = getCurrentGymLeaders();
-    if (!gymData) return;
-
     const summaryContainer = document.getElementById('compact-progress-summary');
+    
+    // Get current level cap regardless of gym data availability
+    const currentLevelCap = getCurrentLevelCap();
+    
+    if (!gymData) {
+        // If no gym data, just show the level cap
+        summaryContainer.innerHTML = `
+            <div class="compact-progress-item">
+                <span>Level Cap:</span>
+                <span class="compact-badge level-cap">${currentLevelCap}</span>
+            </div>
+        `;
+        return;
+    }
+
     const currentProgress = gameData.gymProgress[gameData.currentGame] || {};
 
     // Count completed gym leaders
@@ -151,6 +238,13 @@ function renderCompactProgressSummary() {
             </div>
         `;
     }
+
+    summaryHTML += `
+        <div class="compact-progress-item">
+            <span>Level Cap:</span>
+            <span class="compact-badge level-cap">${currentLevelCap}</span>
+        </div>
+    `;
 
     summaryContainer.innerHTML = summaryHTML;
 }
