@@ -17,7 +17,8 @@ Try it out: https://soullink--laughing-lichterman-c3b6ff.netlify.app
 - **Generation validation** - only shows Pokémon that exist in your chosen game
 - **Streamer mode** - clean overlay window for streaming your run
 - **Import/export** - save your progress as a file to backup or share
-- **Strict Mode** - sick of poor coverage with old 1 type between both teams? Turn it off
+- **Strict mode** - sick of poor coverage with old 1 type between both teams? Turn it off
+- **Shiny support** - you caught a shiny on your run? Totally legit?... you can show the shiny sprite variant!
 
 ## How it works
 
