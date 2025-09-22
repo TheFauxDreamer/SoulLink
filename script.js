@@ -570,21 +570,21 @@ const generationData = [
         id: 5,
         name: 'Unova',
         fullName: 'Generation V',
-        games: 'Black/White/B2W2',
+        games: 'Black/White & B2W2',
         artwork: 'generationImages/gen5.png'
     },
     {
         id: 6,
         name: 'Kalos',
         fullName: 'Generation VI',
-        games: 'X/Y/ORAS',
+        games: 'X/Y & ORAS',
         artwork: 'generationImages/gen6.png'
     },
     {
         id: 7,
         name: 'Alola',
         fullName: 'Generation VII',
-        games: 'Sun/Moon/USUM',
+        games: 'Sun/Moon & USUM',
         artwork: 'generationImages/gen7.png'
     }
 ];
