@@ -1797,145 +1797,181 @@ async function addFailedEncounter() {
 
 // Updated addBothPokemon function with generation validation and shiny support
 async function addBothPokemon() {
-    const route = document.getElementById('current-route').value;
-    const pokemon1Name = document.getElementById('player1-pokemon').value;
-    const nickname1 = document.getElementById('player1-nickname').value;
-    const isShiny1 = document.getElementById('player1-shiny').checked;
-    const pokemon2Name = document.getElementById('player2-pokemon').value;
-    const nickname2 = document.getElementById('player2-nickname').value;
-    const isShiny2 = document.getElementById('player2-shiny').checked;
+    const addButton = document.getElementById('add-both-btn');
+    const failedButton = document.getElementById('failed-btn');
+    
+    // Disable buttons immediately to prevent double-clicking
+    addButton.disabled = true;
+    failedButton.disabled = true;
+    const originalButtonText = addButton.textContent;
+    addButton.textContent = 'Adding...';
+    
+    try {
+        const route = document.getElementById('current-route').value;
+        const pokemon1Name = document.getElementById('player1-pokemon').value;
+        const nickname1 = document.getElementById('player1-nickname').value;
+        const isShiny1 = document.getElementById('player1-shiny').checked;
+        const pokemon2Name = document.getElementById('player2-pokemon').value;
+        const nickname2 = document.getElementById('player2-nickname').value;
+        const isShiny2 = document.getElementById('player2-shiny').checked;
 
-    if (!route) {
-        showToast('Please select a route', 'error');
-        return;
-    }
-
-    if (!pokemon1Name || !pokemon2Name) {
-        showToast('Please enter Pokemon names for both players', 'error');
-        return;
-    }
-
-    if (gameData.usedRoutes.includes(route)) {
-        showToast('This route has already been completed!', 'error');
-        return;
-    }
-
-    if (gameData.failedRoutes.some(failed => failed.route === route)) {
-        showToast('This route has already been marked as failed!', 'error');
-        return;
-    }
-
-    // Validate Pokemon are from correct generation
-    if (!isPokemonValidForGeneration(pokemon1Name, gameData.currentGeneration)) {
-        const genDisplay = gameData.isCustomRom
-            ? `your custom ROM (Gens ${gameData.customPokemonGens.join(', ')})`
-            : `Generation ${generationRomanNumerals[gameData.currentGeneration]}`;
-        showToast(`${pokemon1Name} is not available in ${genDisplay}!`, 'error');
-        return;
-    }
-
-    if (!isPokemonValidForGeneration(pokemon2Name, gameData.currentGeneration)) {
-        const genDisplay = gameData.isCustomRom
-            ? `your custom ROM (Gens ${gameData.customPokemonGens.join(', ')})`
-            : `Generation ${generationRomanNumerals[gameData.currentGeneration]}`;
-        showToast(`${pokemon2Name} is not available in ${genDisplay}!`, 'error');
-        return;
-    }
-
-    // Check evolution line restrictions
-    const evolution1Check = isPokemonOrEvolutionCaught(pokemon1Name, 1);
-    if (evolution1Check.caught) {
-        showToast(`${gameData.playerNames.player1} cannot catch ${pokemon1Name} - already has ${evolution1Check.caughtName} from same evolution line`, 'error');
-        return;
-    }
-
-    const evolution2Check = isPokemonOrEvolutionCaught(pokemon2Name, 2);
-    if (evolution2Check.caught) {
-        showToast(`${gameData.playerNames.player2} cannot catch ${pokemon2Name} - already has ${evolution2Check.caughtName} from same evolution line`, 'error');
-        return;
-    }
-
-    // Fetch Pokemon data with shiny status
-    const pokemonData1 = await getPokemonData(pokemon1Name, isShiny1);
-    const pokemonData2 = await getPokemonData(pokemon2Name, isShiny2);
-
-    if (!pokemonData1 || !pokemonData2) {
-        showToast('One or both Pokemon not found! Please check the spelling.', 'error');
-        return;
-    }
-
-    // NEW: Check if both Pokemon have the same primary type in strict mode
-    if (gameData.strictPrimaryTypeMode) {
-        const primaryType1 = pokemonData1.types[0];
-        const primaryType2 = pokemonData2.types[0];
-
-        if (primaryType1 === primaryType2) {
-            showToast(`Only one player can have a primary (${primaryType1.toUpperCase()}) type on the same route! One player must reroll.`, 'error', 6000);
+        if (!route) {
+            showToast('Please select a route', 'error');
             return;
         }
+
+        if (!pokemon1Name || !pokemon2Name) {
+            showToast('Please enter Pokemon names for both players', 'error');
+            return;
+        }
+
+        if (gameData.usedRoutes.includes(route)) {
+            showToast('This route has already been completed!', 'error');
+            return;
+        }
+
+        if (gameData.failedRoutes.some(failed => failed.route === route)) {
+            showToast('This route has already been marked as failed!', 'error');
+            return;
+        }
+
+        // NEW: Check for duplicate soul links with same Pokemon names on same route
+        const normalizedPokemon1 = normalizePokemonNameForAPI(pokemon1Name);
+        const normalizedPokemon2 = normalizePokemonNameForAPI(pokemon2Name);
+        
+        const isDuplicate = gameData.soulLinks.some(link => 
+            link.pokemon1.route === route && 
+            link.pokemon2.route === route &&
+            normalizePokemonNameForAPI(link.pokemon1.name) === normalizedPokemon1 &&
+            normalizePokemonNameForAPI(link.pokemon2.name) === normalizedPokemon2
+        );
+        
+        if (isDuplicate) {
+            showToast('This exact soul link pair already exists on this route!', 'warning');
+            return;
+        }
+
+        // Validate Pokemon are from correct generation
+        if (!isPokemonValidForGeneration(pokemon1Name, gameData.currentGeneration)) {
+            const genDisplay = gameData.isCustomRom
+                ? `your custom ROM (Gens ${gameData.customPokemonGens.join(', ')})`
+                : `Generation ${generationRomanNumerals[gameData.currentGeneration]}`;
+            showToast(`${pokemon1Name} is not available in ${genDisplay}!`, 'error');
+            return;
+        }
+
+        if (!isPokemonValidForGeneration(pokemon2Name, gameData.currentGeneration)) {
+            const genDisplay = gameData.isCustomRom
+                ? `your custom ROM (Gens ${gameData.customPokemonGens.join(', ')})`
+                : `Generation ${generationRomanNumerals[gameData.currentGeneration]}`;
+            showToast(`${pokemon2Name} is not available in ${genDisplay}!`, 'error');
+            return;
+        }
+
+        // Check evolution line restrictions
+        const evolution1Check = isPokemonOrEvolutionCaught(pokemon1Name, 1);
+        if (evolution1Check.caught) {
+            showToast(`${gameData.playerNames.player1} cannot catch ${pokemon1Name} - already has ${evolution1Check.caughtName} from same evolution line`, 'error');
+            return;
+        }
+
+        const evolution2Check = isPokemonOrEvolutionCaught(pokemon2Name, 2);
+        if (evolution2Check.caught) {
+            showToast(`${gameData.playerNames.player2} cannot catch ${pokemon2Name} - already has ${evolution2Check.caughtName} from same evolution line`, 'error');
+            return;
+        }
+
+        // Fetch Pokemon data with shiny status
+        const pokemonData1 = await getPokemonData(pokemon1Name, isShiny1);
+        const pokemonData2 = await getPokemonData(pokemon2Name, isShiny2);
+
+        if (!pokemonData1 || !pokemonData2) {
+            showToast('One or both Pokemon not found! Please check the spelling.', 'error');
+            return;
+        }
+
+        // Check if both Pokemon have the same primary type in strict mode
+        if (gameData.strictPrimaryTypeMode) {
+            const primaryType1 = pokemonData1.types[0];
+            const primaryType2 = pokemonData2.types[0];
+
+            if (primaryType1 === primaryType2) {
+                showToast(`Only one player can have a primary (${primaryType1.toUpperCase()}) type on the same route! One player must reroll.`, 'error', 6000);
+                return;
+            }
+        }
+
+        // Create Pokemon objects
+        const pokemon1 = {
+            id: Date.now() + Math.random(),
+            route: route,
+            name: pokemonData1.name,
+            displayName: pokemonData1.displayName,
+            nickname: nickname1 || pokemonData1.displayName,
+            sprite: pokemonData1.sprite,
+            animatedSprite: pokemonData1.animatedSprite,
+            types: pokemonData1.types,
+            player: 1,
+            fainted: false,
+            failedToCache: false,
+            isShiny: isShiny1
+        };
+
+        const pokemon2 = {
+            id: Date.now() + Math.random() + 1,
+            route: route,
+            name: pokemonData2.name,
+            displayName: pokemonData2.displayName,
+            nickname: nickname2 || pokemonData2.displayName,
+            sprite: pokemonData2.sprite,
+            animatedSprite: pokemonData2.animatedSprite,
+            types: pokemonData2.types,
+            player: 2,
+            fainted: false,
+            failedToCache: false,
+            isShiny: isShiny2
+        };
+
+        // Add to caught lists
+        gameData.player1.caught.push(pokemon1);
+        gameData.player2.caught.push(pokemon2);
+
+        // Create soul link
+        gameData.soulLinks.push({
+            pokemon1: pokemon1,
+            pokemon2: pokemon2
+        });
+
+        // Mark route as used
+        gameData.usedRoutes.push(route);
+
+        // Clear inputs
+        document.getElementById('player1-pokemon').value = '';
+        document.getElementById('player1-nickname').value = '';
+        document.getElementById('player1-shiny').checked = false;
+        document.getElementById('player2-pokemon').value = '';
+        document.getElementById('player2-nickname').value = '';
+        document.getElementById('player2-shiny').checked = false;
+        document.getElementById('current-route').value = '';
+
+        saveData();
+        populateRoutes();
+        renderAll();
+        updateRouteSelector();
+        updateCounts();
+
+        const shinyText = (isShiny1 || isShiny2) ? ' ✨' : '';
+        showToast(`Soul Link created: ${pokemon1.nickname} ⟷ ${pokemon2.nickname} on ${route}${shinyText}`, 'success');
+        
+    } catch (error) {
+        console.error('Error adding Pokemon:', error);
+        showToast('An error occurred while adding Pokemon. Please try again.', 'error');
+    } finally {
+        // Re-enable buttons and restore text
+        addButton.disabled = false;
+        failedButton.disabled = false;
+        addButton.textContent = originalButtonText;
     }
-
-    // Create Pokemon objects
-    const pokemon1 = {
-        id: Date.now() + Math.random(),
-        route: route,
-        name: pokemonData1.name,
-        displayName: pokemonData1.displayName,
-        nickname: nickname1 || pokemonData1.displayName,
-        sprite: pokemonData1.sprite,
-        animatedSprite: pokemonData1.animatedSprite,
-        types: pokemonData1.types,
-        player: 1,
-        fainted: false,
-        failedToCache: false,
-        isShiny: isShiny1
-    };
-
-    const pokemon2 = {
-        id: Date.now() + Math.random() + 1,
-        route: route,
-        name: pokemonData2.name,
-        displayName: pokemonData2.displayName,
-        nickname: nickname2 || pokemonData2.displayName,
-        sprite: pokemonData2.sprite,
-        animatedSprite: pokemonData2.animatedSprite,
-        types: pokemonData2.types,
-        player: 2,
-        fainted: false,
-        failedToCache: false,
-        isShiny: isShiny2
-    };
-
-    // Add to caught lists
-    gameData.player1.caught.push(pokemon1);
-    gameData.player2.caught.push(pokemon2);
-
-    // Create soul link
-    gameData.soulLinks.push({
-        pokemon1: pokemon1,
-        pokemon2: pokemon2
-    });
-
-    // Mark route as used
-    gameData.usedRoutes.push(route);
-
-    // Clear inputs
-    document.getElementById('player1-pokemon').value = '';
-    document.getElementById('player1-nickname').value = '';
-    document.getElementById('player1-shiny').checked = false;
-    document.getElementById('player2-pokemon').value = '';
-    document.getElementById('player2-nickname').value = '';
-    document.getElementById('player2-shiny').checked = false;
-    document.getElementById('current-route').value = '';
-
-    saveData();
-    populateRoutes();
-    renderAll();
-    updateRouteSelector();
-    updateCounts();
-
-    const shinyText = (isShiny1 || isShiny2) ? ' ✨' : '';
-    showToast(`Soul Link created: ${pokemon1.nickname} ⟷ ${pokemon2.nickname} on ${route}${shinyText}`, 'success');
 }
 
 // Render all UI elements
