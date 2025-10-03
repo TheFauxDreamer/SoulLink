@@ -19,6 +19,7 @@ Try it out: https://soullink--laughing-lichterman-c3b6ff.netlify.app
 - **Import/export** - save your progress as a file to backup or share
 - **Strict mode** - sick of poor coverage with old 1 type between both teams? Turn it off
 - **Shiny support** - you caught a shiny on your run? Totally legit?... you can show the shiny sprite variant!
+- **Mix & Match Generations** - playing a Gen 3 ROMhack with pokemon from Gens 1-7? You can do that.
 
 ## How it works
 
