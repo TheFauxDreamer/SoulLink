@@ -39,10 +39,13 @@
         h1 {
             text-align: center;
             color: #fff;
-            text-shadow: 2px 2px 0 #2a5834;
+            text-shadow: 2px 2px 0 #1c4466;
             margin-bottom: 20px;
             font-size: 20px;
             animation: glow 2s ease-in-out infinite alternate;
+            position: relative;
+            /* Add padding to prevent badge overlap on small screens */
+            padding: 0 120px;
         }
 
         @keyframes glow {
@@ -699,9 +702,16 @@
             border: 2px solid #d68910;
             border-radius: 4px;
             font-size: 8px;
-            margin-left: 10px;
             text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.3);
+
+            /* Position absolutely to not affect h1 centering */
+            position: absolute;
+            right: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            margin: 0;
         }
+
 
         .main-grid {
             display: grid;
@@ -1654,6 +1664,24 @@
             flex-shrink: 0;
         }
 
+        @media (max-width: 480px) {
+            h1 {
+                font-size: 14px;
+                padding: 0 10px;
+                margin-bottom: 35px;
+                /* Add space for badge below */
+            }
+
+            .generation-badge {
+                /* Stack badge below title on very small screens */
+                position: static;
+                display: block;
+                margin: 8px auto 0;
+                transform: none;
+                width: fit-content;
+            }
+        }
+
         /* Responsive adjustments */
         @media (max-width: 768px) {
             .available-pokemon {
@@ -1667,6 +1695,16 @@
             .soul-link-arrow {
                 transform: rotate(90deg);
                 font-size: 10px;
+            }
+
+            h1 {
+                font-size: 16px;
+                padding: 0 100px;
+            }
+
+            .generation-badge {
+                font-size: 7px;
+                padding: 3px 6px;
             }
         }
 
