@@ -1,4 +1,4 @@
-// Game data structure
+// Game data structure 
 let gameData = {
     player1: {
         caught: [],
