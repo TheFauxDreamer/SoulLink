@@ -517,7 +517,8 @@
 
         .carousel-container {
             position: relative;
-            height: 220px;
+            height: 240px;
+            /* Increased height to accommodate wider images */
             margin-bottom: 20px;
             overflow: hidden;
             border-radius: 8px;
@@ -547,12 +548,25 @@
             box-shadow: 0 0 20px rgba(74, 157, 47, 0.3);
         }
 
-        .generation-artwork {
-            width: 140px;
+        .generation-artwork-container {
+            width: 100%;
+            max-width: 400px;
+            /* Allow wider images */
             height: 140px;
-            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             margin-bottom: 12px;
-            object-fit: cover;
+        }
+
+        .generation-artwork {
+            max-width: 100%;
+            max-height: 140px;
+            width: auto;
+            height: auto;
+            border-radius: 8px;
+            object-fit: contain;
+            /* Changed from cover to contain */
             border: 2px solid #2a5834;
         }
 
@@ -1665,6 +1679,27 @@
         }
 
         @media (max-width: 480px) {
+            .carousel-container {
+                height: 200px;
+            }
+
+            .generation-artwork-container {
+                max-width: 280px;
+                height: 100px;
+            }
+
+            .generation-artwork {
+                max-height: 100px;
+            }
+
+            .generation-name {
+                font-size: 14px;
+            }
+
+            .generation-games {
+                font-size: 7px;
+            }
+
             h1 {
                 font-size: 14px;
                 padding: 0 10px;
@@ -1684,6 +1719,19 @@
 
         /* Responsive adjustments */
         @media (max-width: 768px) {
+            .carousel-container {
+                height: 220px;
+            }
+
+            .generation-artwork-container {
+                max-width: 350px;
+                height: 120px;
+            }
+
+            .generation-artwork {
+                max-height: 120px;
+            }
+
             .available-pokemon {
                 grid-template-columns: 1fr;
             }
@@ -1807,7 +1855,7 @@
     <div id="generation-selector-modal" class="generation-selector-modal" style="display: none;">
         <div class="generation-carousel-container">
             <div class="generation-carousel-header">
-                <h2>Welcome to Soul Link Nuzlocke Tracker!</h2>
+                <h2>Welcome to the Soul Link Tracker!</h2>
                 <p>Select your generation and game to begin</p>
             </div>
 
