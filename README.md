@@ -1,6 +1,6 @@
 # Pokémon Soul Link Tracker
 
-A web-based Pokémon soul link tracker! Supports generations 1-7.
+A web-based Pokémon soul link tracker! Supports generations 1-7 games.
 
 Playing a Soul Link Nuzlocke with a friend? Trying to work out how on earth you'll keep track of the routes, Pokémon, if they've fainted, what gym you're up to, the current level cap, and what the optimal team is?
 
@@ -19,7 +19,8 @@ Try it out: https://soullink--laughing-lichterman-c3b6ff.netlify.app
 - **Import/export** - save your progress as a file to backup or share
 - **Strict mode** - sick of poor coverage with old 1 type between both teams? Turn it off
 - **Shiny support** - you caught a shiny on your run? Totally legit?... you can show the shiny sprite variant!
-- **Mix & Match Generations** - playing a Gen 3 ROMhack with pokemon from Gens 1-7? You can do that.
+- **Mix & Match Generations** - playing a something like a Gen 3 ROM hack with pokemon from Gens 1-9? You can do that.
+- **Custom ROM Hack Support** - playing a completely custom ROM hack game? We now support fakemon, sprits, routes etc!
 
 ## How it works
 
