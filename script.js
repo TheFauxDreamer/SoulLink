@@ -1,27 +1,713 @@
+// Custom ROM data storage
+let customRomData = {
+    pokemon: [],
+    routes: [],
+    sprites: {},
+    evolutionLines: {},
+    name: 'Custom ROM',
+    gymLeaders: [],      // ADD THIS
+    eliteFour: [],       // ADD THIS
+    kantoLeaders: []     // ADD THIS (optional, for games like HGSS)
+};
+
+
+// Show custom ROM upload interface inline
+function showCustomRomUploadInterface() {
+    const gameContainer = document.getElementById('game-select-container');
+    gameContainer.style.display = 'block';
+
+    const savedName = customRomData.name !== 'Custom ROM' ? customRomData.name : '';
+
+    gameContainer.innerHTML = `
+        <div style="max-width: 700px; margin: 0 auto;">
+            <h3 style="color: #2a5834; margin-bottom: 15px; font-size: 12px;">ROM Hack Name</h3>
+            <p style="font-size: 8px; margin-bottom: 10px; color: #666;">Give your custom ROM a name</p>
+            
+            <div style="margin-bottom: 20px;">
+                <input type="text" 
+                       id="custom-rom-name" 
+                       placeholder="Enter ROM Hack name..." 
+                       value="${savedName || 'Custom ROM'}"
+                       onchange="updateCustomRomName()"
+                       style="width: 100%; padding: 10px; font-family: 'Press Start 2P', monospace; 
+                              font-size: 9px; border: 2px solid #78c850; border-radius: 4px; 
+                              background: white; color: #2a5834;">
+            </div>
+
+            <h3 style="color: #2a5834; margin-bottom: 15px; font-size: 12px;">Step 1: Upload Pokemon Data</h3>
+            <p style="font-size: 8px; margin-bottom: 10px; color: #666;">CSV format: name,type1,type2,sprite_url,evolution_line</p>
+            
+            <div class="drop-zone" id="pokemon-drop-zone">
+                <div class="drop-zone-icon">📄</div>
+                <div class="drop-zone-label">Drag & Drop Pokemon CSV Here</div>
+                <div class="drop-zone-hint">or click to browse</div>
+            </div>
+            
+            <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                <input type="file" id="pokemon-csv-upload" accept=".csv" style="display: none;">
+                <button onclick="document.getElementById('pokemon-csv-upload').click()" 
+                        style="padding: 10px 15px; background: #3498db; color: white; border: none; 
+                               border-radius: 4px; cursor: pointer; font-family: 'Press Start 2P', monospace; 
+                               font-size: 8px;">
+                    Browse Files
+                </button>
+                <button onclick="downloadPokemonTemplate()" 
+                        style="padding: 10px 15px; background: #27ae60; color: white; border: none; 
+                               border-radius: 4px; cursor: pointer; font-family: 'Press Start 2P', monospace; 
+                               font-size: 8px;">
+                    Download Template
+                </button>
+            </div>
+            <div id="pokemon-upload-status" style="font-size: 7px; color: #666; margin-bottom: 15px;"></div>
+
+            <h3 style="color: #2a5834; margin-bottom: 15px; font-size: 12px;">Step 2: Upload Routes Data</h3>
+            <p style="font-size: 8px; margin-bottom: 10px; color: #666;">CSV format: route_name</p>
+            
+            <div class="drop-zone" id="routes-drop-zone">
+                <div class="drop-zone-icon">🗺️</div>
+                <div class="drop-zone-label">Drag & Drop Routes CSV Here</div>
+                <div class="drop-zone-hint">or click to browse</div>
+            </div>
+            
+            <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                <input type="file" id="routes-csv-upload" accept=".csv" style="display: none;">
+                <button onclick="document.getElementById('routes-csv-upload').click()" 
+                        style="padding: 10px 15px; background: #3498db; color: white; border: none; 
+                               border-radius: 4px; cursor: pointer; font-family: 'Press Start 2P', monospace; 
+                               font-size: 8px;">
+                    Browse Files
+                </button>
+                <button onclick="downloadRoutesTemplate()" 
+                        style="padding: 10px 15px; background: #27ae60; color: white; border: none; 
+                               border-radius: 4px; cursor: pointer; font-family: 'Press Start 2P', monospace; 
+                               font-size: 8px;">
+                    Download Template
+                </button>
+            </div>
+            <div id="routes-upload-status" style="font-size: 7px; color: #666; margin-bottom: 15px;"></div>
+
+            <h3 style="color: #2a5834; margin-bottom: 15px; font-size: 12px;">Step 3: Upload Sprites (Optional)</h3>
+            <p style="font-size: 8px; margin-bottom: 10px; color: #666;">Upload sprites or use URLs in CSV</p>
+            
+            <div class="drop-zone" id="sprites-drop-zone">
+                <div class="drop-zone-icon">🖼️</div>
+                <div class="drop-zone-label">Drag & Drop Sprite Images Here</div>
+                <div class="drop-zone-hint">or click to browse (multiple files supported)</div>
+            </div>
+            
+            <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                <input type="file" id="sprites-upload" accept="image/*" multiple style="display: none;">
+                <button onclick="document.getElementById('sprites-upload').click()" 
+                        style="padding: 10px 15px; background: #3498db; color: white; border: none; 
+                               border-radius: 4px; cursor: pointer; font-family: 'Press Start 2P', monospace; 
+                               font-size: 8px;">
+                    Browse Files
+                </button>
+            </div>
+            <div id="sprites-upload-status" style="font-size: 7px; color: #666; margin-bottom: 20px;"></div>
+            
+            <h3 style="color: #2a5834; margin-bottom: 15px; font-size: 12px;">Step 4: Upload Gym Leaders & Elite Four (Optional)</h3>
+            <p style="font-size: 8px; margin-bottom: 10px; color: #666;">CSV format: name,location,badge,type,level_cap,is_elite_four,title</p>
+
+            <div class="drop-zone" id="gym-leaders-drop-zone">
+                <div class="drop-zone-icon">🏆</div>
+                <div class="drop-zone-label">Drag & Drop Gym Leaders CSV Here</div>
+                <div class="drop-zone-hint">or click to browse</div>
+            </div>
+
+            <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                <input type="file" id="gym-leaders-csv-upload" accept=".csv" style="display: none;">
+                <button onclick="document.getElementById('gym-leaders-csv-upload').click()" 
+                        style="padding: 10px 15px; background: #3498db; color: white; border: none; 
+                               border-radius: 4px; cursor: pointer; font-family: 'Press Start 2P', monospace; 
+                               font-size: 8px;">
+                    Browse Files
+                </button>
+                <button onclick="downloadGymLeadersTemplate()" 
+                        style="padding: 10px 15px; background: #27ae60; color: white; border: none; 
+                               border-radius: 4px; cursor: pointer; font-family: 'Press Start 2P', monospace; 
+                               font-size: 8px;">
+                    Download Template
+                </button>
+            </div>
+            <div id="gym-leaders-upload-status" style="font-size: 7px; color: #666; margin-bottom: 20px;"></div>
+        </div>
+    `;
+
+    setupCustomRomListeners();
+    setupDragAndDrop();
+    checkCustomRomReadyInline();
+}
+
+function setupDragAndDrop() {
+    const dropZones = [
+        { id: 'pokemon-drop-zone', inputId: 'pokemon-csv-upload', handler: handlePokemonCSV },
+        { id: 'routes-drop-zone', inputId: 'routes-csv-upload', handler: handleRoutesCSV },
+        { id: 'sprites-drop-zone', inputId: 'sprites-upload', handler: handleSpritesUpload },
+        { id: 'gym-leaders-drop-zone', inputId: 'gym-leaders-csv-upload', handler: handleGymLeadersCSV }
+    ];
+
+    dropZones.forEach(zone => {
+        const dropZone = document.getElementById(zone.id);
+        const fileInput = document.getElementById(zone.inputId);
+
+        if (!dropZone || !fileInput) return;
+
+        // Prevent default drag behaviors
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, preventDefaults, false);
+            document.body.addEventListener(eventName, preventDefaults, false);
+        });
+
+        // Highlight drop zone when item is dragged over it
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropZone.addEventListener(eventName, () => {
+                dropZone.classList.add('drag-over');
+            }, false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, () => {
+                dropZone.classList.remove('drag-over');
+            }, false);
+        });
+
+        // Handle dropped files
+        dropZone.addEventListener('drop', (e) => {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+
+            if (files.length > 0) {
+                // Create a mock event object for the handler
+                const mockEvent = {
+                    target: {
+                        files: files,
+                        value: ''
+                    }
+                };
+                zone.handler(mockEvent);
+            }
+        }, false);
+
+        // Also handle click to open file browser
+        dropZone.addEventListener('click', () => {
+            fileInput.click();
+        });
+    });
+}
+
+// Prevent default drag behaviors
+function preventDefaults(e) {
+    e.preventDefault();
+    e.stopPropagation();
+}
+
+
+// Check if ready and update the main start button
+function checkCustomRomReadyInline() {
+    const startBtn = document.getElementById('start-tracker');
+
+    if (customRomData.pokemon.length > 0 && customRomData.routes.length > 0) {
+        startBtn.disabled = false;
+        selectedGame = 'custom_rom'; // Mark as ready
+    } else {
+        startBtn.disabled = true;
+        selectedGame = null;
+    }
+}
+
+// Update ROM name from input
+function updateCustomRomName() {
+    const romNameInput = document.getElementById('custom-rom-name');
+    if (romNameInput && romNameInput.value.trim()) {
+        customRomData.name = romNameInput.value.trim();
+    }
+}
+
+// Download Gym Leaders CSV template
+function downloadGymLeadersTemplate() {
+    const template = `name,location,badge,type,level_cap,is_elite_four,title,is_kanto
+Brock,Pewter City,Boulder Badge,Rock,14,FALSE,,FALSE
+Misty,Cerulean City,Cascade Badge,Water,21,FALSE,,FALSE
+Lt. Surge,Vermilion City,Thunder Badge,Electric,28,FALSE,,FALSE
+Erika,Celadon City,Rainbow Badge,Grass,32,FALSE,,FALSE
+Koga,Fuchsia City,Soul Badge,Poison,37,FALSE,,FALSE
+Sabrina,Saffron City,Marsh Badge,Psychic,43,FALSE,,FALSE
+Blaine,Cinnabar Island,Volcano Badge,Fire,47,FALSE,,FALSE
+Giovanni,Viridian City,Earth Badge,Ground,50,FALSE,,FALSE
+Lorelei,Elite Four,Ice Crown,Ice,54,TRUE,Elite Four,FALSE
+Bruno,Elite Four,Fighting Crown,Fighting,56,TRUE,Elite Four,FALSE
+Agatha,Elite Four,Ghost Crown,Ghost,58,TRUE,Elite Four,FALSE
+Lance,Elite Four,Dragon Crown,Dragon,60,TRUE,Elite Four,FALSE
+Blue,Pokemon League,Champion Crown,Normal,63,TRUE,Champion,FALSE
+
+# Instructions:
+# - name: Gym Leader/Elite Four member name (required)
+# - location: City/location name (required)
+# - badge: Badge name (optional for Elite Four)
+# - type: Pokemon type specialty (required)
+# - level_cap: Level cap after defeating this leader (required, number)
+# - is_elite_four: TRUE for Elite Four/Champion, FALSE for gym leaders (required)
+# - title: "Elite Four" or "Champion" for Elite Four members, leave blank for gym leaders
+# - is_kanto: TRUE for Kanto leaders (like in HGSS), FALSE for main region (optional)
+# 
+# Valid types: Normal, Fire, Water, Electric, Grass, Ice, Fighting, Poison,
+#              Ground, Flying, Psychic, Bug, Rock, Ghost, Dragon, Dark, Steel, Fairy
+#
+# Leaders should be listed in the order they're encountered`;
+
+    downloadCSV(template, 'gym_leaders_template.csv');
+    showToast('Gym Leaders template downloaded!', 'success');
+}
+
+// Download Pokemon CSV template
+function downloadPokemonTemplate() {
+    const template = `name,type1,type2,sprite_url,evolution_line
+Fakemon1,Fire,,https://example.com/fakemon1.png,Fakemon1>Fakemon2>Fakemon3
+Fakemon2,Fire,Flying,https://example.com/fakemon2.png,Fakemon1>Fakemon2>Fakemon3
+Fakemon3,Fire,Dragon,https://example.com/fakemon3.png,Fakemon1>Fakemon2>Fakemon3
+Fakemon4,Water,,,Fakemon4
+Legendmon,Psychic,Fairy,https://example.com/legendmon.png,Legendmon
+
+# Instructions:
+# - name: Pokemon name (required, must be unique)
+# - type1: Primary type (required)
+# - type2: Secondary type (optional, leave blank if none)
+# - sprite_url: Direct URL to sprite image (optional if uploading sprites separately)
+# - evolution_line: Evolution chain separated by > (e.g., "Starter>Middle>Final")
+#   For Pokemon that don't evolve, just put their own name
+# 
+# Valid types: Normal, Fire, Water, Electric, Grass, Ice, Fighting, Poison,
+#              Ground, Flying, Psychic, Bug, Rock, Ghost, Dragon, Dark, Steel, Fairy`;
+
+    downloadCSV(template, 'pokemon_template.csv');
+    showToast('Pokemon template downloaded!', 'success');
+}
+
+// Download Routes CSV template
+function downloadRoutesTemplate() {
+    const template = `route_name
+Route 1
+Route 2
+Dark Forest
+Mystery Cave
+Champion Road
+Victory Road
+Elite Four Challenge
+
+# Instructions:
+# - route_name: Name of the route/location (required)
+# - One route per line
+# - Routes will appear in the order listed`;
+
+    downloadCSV(template, 'routes_template.csv');
+    showToast('Routes template downloaded!', 'success');
+}
+
+// Helper function to download CSV
+function downloadCSV(content, filename) {
+    const blob = new Blob([content], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+    window.URL.revokeObjectURL(url);
+}
+
+function validateCSVHeaders(text, expectedHeaders, fileType) {
+    const lines = text.split('\n').filter(line => line.trim() && !line.startsWith('#'));
+
+    if (lines.length < 1) {
+        return { valid: false, error: `${fileType} CSV is empty or only contains comments` };
+    }
+
+    const headers = lines[0].toLowerCase().split(',').map(h => h.trim());
+    const missingHeaders = expectedHeaders.filter(expected => !headers.includes(expected.toLowerCase()));
+
+    if (missingHeaders.length > 0) {
+        return {
+            valid: false,
+            error: `${fileType} CSV is missing required columns: ${missingHeaders.join(', ')}.\n\nFound columns: ${headers.join(', ')}\n\nExpected columns: ${expectedHeaders.join(', ')}`
+        };
+    }
+
+    if (lines.length < 2) {
+        return { valid: false, error: `${fileType} CSV has no data rows (only headers found)` };
+    }
+
+    return { valid: true };
+}
+
+// Parse Pokemon CSV
+async function handlePokemonCSV(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const statusDiv = document.getElementById('pokemon-upload-status');
+    statusDiv.innerHTML = '<span class="upload-status-info">Processing Pokemon data...</span>';
+
+    try {
+        const text = await file.text();
+
+        // Validate CSV structure
+        const expectedHeaders = ['name', 'type1'];
+        const validation = validateCSVHeaders(text, expectedHeaders, 'Pokemon');
+
+        if (!validation.valid) {
+            throw new Error(validation.error);
+        }
+
+        const lines = text.split('\n').filter(line => line.trim() && !line.startsWith('#'));
+        const header = lines[0].toLowerCase().split(',').map(h => h.trim());
+
+        customRomData.pokemon = [];
+        customRomData.evolutionLines = {};
+
+        for (let i = 1; i < lines.length; i++) {
+            const values = lines[i].split(',').map(v => v.trim());
+            const pokemon = {};
+
+            header.forEach((col, index) => {
+                pokemon[col] = values[index] || '';
+            });
+
+            if (!pokemon.name || !pokemon.type1) {
+                console.warn(`Skipping invalid row ${i + 1}: missing name or type1`);
+                continue;
+            }
+
+            const normalizedName = pokemon.name.toLowerCase().replace(/[^a-z0-9-]/g, '');
+
+            if (pokemon.evolution_line) {
+                const evolutions = pokemon.evolution_line.split('>').map(e =>
+                    e.trim().toLowerCase().replace(/[^a-z0-9-]/g, '')
+                );
+                customRomData.evolutionLines[normalizedName] = evolutions;
+            } else {
+                customRomData.evolutionLines[normalizedName] = [normalizedName];
+            }
+
+            customRomData.pokemon.push({
+                name: normalizedName,
+                displayName: pokemon.name,
+                types: [pokemon.type1.toLowerCase(), pokemon.type2 ? pokemon.type2.toLowerCase() : null].filter(Boolean),
+                spriteUrl: pokemon.sprite_url || null
+            });
+        }
+
+        statusDiv.innerHTML = `<span class="upload-status-success">✓ Loaded ${customRomData.pokemon.length} Pokemon!</span>`;
+        checkCustomRomReady();
+        showToast(`Loaded ${customRomData.pokemon.length} Pokemon from CSV!`, 'success');
+
+    } catch (error) {
+        statusDiv.innerHTML = `<span class="upload-status-error">✗ Error: ${error.message}</span>`;
+        showToast('Failed to parse Pokemon CSV: ' + error.message, 'error', 8000);
+
+        // Clear the file input
+        customRomData.pokemon = [];
+        customRomData.evolutionLines = {};
+        checkCustomRomReady();
+    }
+
+    event.target.value = '';
+}
+
+// Parse Routes CSV
+async function handleRoutesCSV(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const statusDiv = document.getElementById('routes-upload-status');
+    statusDiv.innerHTML = '<span class="upload-status-info">Processing routes data...</span>';
+
+    try {
+        const text = await file.text();
+
+        // Validate CSV structure
+        const expectedHeaders = ['route_name'];
+        const validation = validateCSVHeaders(text, expectedHeaders, 'Routes');
+
+        if (!validation.valid) {
+            throw new Error(validation.error);
+        }
+
+        const lines = text.split('\n')
+            .map(line => line.trim())
+            .filter(line => line && !line.startsWith('#'));
+
+        customRomData.routes = [];
+
+        // Skip header and process routes
+        for (let i = 1; i < lines.length; i++) {
+            const routeName = lines[i].trim();
+            if (routeName) {
+                customRomData.routes.push(routeName);
+            }
+        }
+
+        if (customRomData.routes.length === 0) {
+            throw new Error('No valid routes found in CSV');
+        }
+
+        statusDiv.innerHTML = `<span class="upload-status-success">✓ Loaded ${customRomData.routes.length} routes!</span>`;
+        checkCustomRomReady();
+        showToast(`Loaded ${customRomData.routes.length} routes from CSV!`, 'success');
+
+    } catch (error) {
+        statusDiv.innerHTML = `<span class="upload-status-error">✗ Error: ${error.message}</span>`;
+        showToast('Failed to parse routes CSV: ' + error.message, 'error', 8000);
+
+        // Clear the routes
+        customRomData.routes = [];
+        checkCustomRomReady();
+    }
+
+    event.target.value = '';
+}
+
+// Handle sprite uploads
+async function handleSpritesUpload(event) {
+    const files = event.target.files;
+    if (!files || files.length === 0) return;
+
+    const statusDiv = document.getElementById('sprites-upload-status');
+    statusDiv.innerHTML = '<span class="upload-status-info">Processing sprite uploads...</span>';
+
+    try {
+        let successCount = 0;
+        let errorCount = 0;
+        const errors = [];
+
+        for (let i = 0; i < files.length; i++) {
+            const file = files[i];
+
+            // Validate file is an image
+            if (!file.type.startsWith('image/')) {
+                errorCount++;
+                errors.push(`${file.name} is not an image file`);
+                continue;
+            }
+
+            const fileName = file.name.replace(/\.[^/.]+$/, '');
+            const normalizedName = fileName.toLowerCase().replace(/[^a-z0-9-]/g, '');
+
+            const reader = new FileReader();
+            const dataUrl = await new Promise((resolve, reject) => {
+                reader.onload = (e) => resolve(e.target.result);
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
+
+            customRomData.sprites[normalizedName] = dataUrl;
+            successCount++;
+        }
+
+        let statusMessage = `<span class="upload-status-success">✓ Uploaded ${successCount} sprite(s)!</span>`;
+        if (errorCount > 0) {
+            statusMessage += `<br><span class="upload-status-error">✗ ${errorCount} file(s) skipped (not images)</span>`;
+        }
+        statusDiv.innerHTML = statusMessage;
+
+        showToast(`Uploaded ${successCount} sprite(s)!${errorCount > 0 ? ` (${errorCount} skipped)` : ''}`, successCount > 0 ? 'success' : 'warning');
+
+    } catch (error) {
+        statusDiv.innerHTML = `<span class="upload-status-error">✗ Error uploading sprites: ${error.message}</span>`;
+        showToast('Failed to upload sprites: ' + error.message, 'error');
+    }
+
+    event.target.value = '';
+}
+
+
+// Parse Gym Leaders CSV
+async function handleGymLeadersCSV(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const statusDiv = document.getElementById('gym-leaders-upload-status');
+    statusDiv.innerHTML = '<span class="upload-status-info">Processing gym leaders data...</span>';
+
+    try {
+        const text = await file.text();
+
+        // Validate CSV structure
+        const expectedHeaders = ['name', 'location', 'type', 'level_cap', 'is_elite_four'];
+        const validation = validateCSVHeaders(text, expectedHeaders, 'Gym Leaders');
+
+        if (!validation.valid) {
+            throw new Error(validation.error);
+        }
+
+        const lines = text.split('\n').filter(line => line.trim() && !line.startsWith('#'));
+        const header = lines[0].toLowerCase().split(',').map(h => h.trim());
+
+        customRomData.gymLeaders = [];
+        customRomData.eliteFour = [];
+        customRomData.kantoLeaders = [];
+
+        let validCount = 0;
+        let skippedCount = 0;
+
+        for (let i = 1; i < lines.length; i++) {
+            const values = lines[i].split(',').map(v => v.trim());
+            const leader = {};
+
+            header.forEach((col, index) => {
+                leader[col] = values[index] || '';
+            });
+
+            if (!leader.name || !leader.type || !leader.level_cap) {
+                console.warn(`Skipping row ${i + 1}: missing required fields (name, type, or level_cap)`);
+                skippedCount++;
+                continue;
+            }
+
+            const isEliteFour = leader.is_elite_four?.toUpperCase() === 'TRUE';
+            const isKanto = leader.is_kanto?.toUpperCase() === 'TRUE';
+            const levelCap = parseInt(leader.level_cap);
+
+            if (isNaN(levelCap)) {
+                console.warn(`Skipping row ${i + 1}: invalid level_cap (must be a number)`);
+                skippedCount++;
+                continue;
+            }
+
+            const leaderData = {
+                id: leader.name.toLowerCase().replace(/[^a-z0-9]/g, '_'),
+                name: leader.name,
+                location: leader.location || 'Unknown',
+                badge: leader.badge || '',
+                type: leader.type.charAt(0).toUpperCase() + leader.type.slice(1).toLowerCase(),
+                levelCap: levelCap,
+                title: leader.title || ''
+            };
+
+            if (isEliteFour) {
+                customRomData.eliteFour.push(leaderData);
+            } else if (isKanto) {
+                customRomData.kantoLeaders.push(leaderData);
+            } else {
+                customRomData.gymLeaders.push(leaderData);
+            }
+
+            validCount++;
+        }
+
+        const totalLeaders = customRomData.gymLeaders.length +
+            customRomData.eliteFour.length +
+            customRomData.kantoLeaders.length;
+
+        statusDiv.innerHTML = `<span class="upload-status-success">✓ Loaded ${customRomData.gymLeaders.length} gym leaders, ${customRomData.eliteFour.length} Elite Four members${customRomData.kantoLeaders.length > 0 ? `, ${customRomData.kantoLeaders.length} Kanto leaders` : ''}!</span>`;
+
+        if (skippedCount > 0) {
+            statusDiv.innerHTML += `<br><span class="upload-status-error">⚠ ${skippedCount} row(s) skipped due to missing or invalid data</span>`;
+        }
+
+        showToast(`Loaded ${totalLeaders} gym leaders/Elite Four members from CSV!${skippedCount > 0 ? ` (${skippedCount} skipped)` : ''}`, 'success');
+
+    } catch (error) {
+        statusDiv.innerHTML = `<span class="upload-status-error">✗ Error: ${error.message}</span>`;
+        showToast('Failed to parse gym leaders CSV: ' + error.message, 'error', 8000);
+
+        // Clear the data on error
+        customRomData.gymLeaders = [];
+        customRomData.eliteFour = [];
+        customRomData.kantoLeaders = [];
+    }
+
+    event.target.value = '';
+}
+
+
+// Check if custom ROM is ready to start
+function checkCustomRomReady() {
+    checkCustomRomReadyInline();
+}
+
+// Start tracker with custom ROM data
+function startCustomRom() {
+    if (customRomData.pokemon.length === 0 || customRomData.routes.length === 0) {
+        showToast('Please upload both Pokemon and routes data!', 'error');
+        return;
+    }
+
+    // Update ROM name from input before saving
+    updateCustomRomName();
+
+    // Store custom ROM data
+    gameData.customRomData = JSON.parse(JSON.stringify(customRomData));
+    gameData.currentGeneration = 'custom-rom';
+    gameData.currentGame = 'custom_rom';
+    // REMOVE THIS LINE - don't set isCustomRom for uploaded ROMs
+    // gameData.isCustomRom = true;
+
+    // Setup Pokemon names for autocomplete
+    pokemonNames = customRomData.pokemon.map(p => p.displayName);
+
+    // Setup evolution lines
+    evolutionLines = { ...customRomData.evolutionLines };
+
+    // Setup routes for the custom game
+    gameRoutes['custom_rom'] = {
+        name: customRomData.name || 'Custom ROM',
+        generation: 'custom-rom',
+        routes: [...customRomData.routes]
+    };
+
+    // Store gym leader data if it exists
+    if (customRomData.gymLeaders.length > 0 || customRomData.eliteFour.length > 0) {
+        gameData.customRomData.gymLeaders = [...customRomData.gymLeaders];
+        gameData.customRomData.eliteFour = [...customRomData.eliteFour];
+        gameData.customRomData.kantoLeaders = [...customRomData.kantoLeaders];
+    }
+
+    saveData();
+    document.getElementById('generation-selector-modal').style.display = 'none';
+    initializeApp();
+
+    showToast(`${customRomData.name} loaded successfully! Start catching Pokemon!`, 'success');
+}
+
+
+// Setup file upload listeners
+function setupCustomRomListeners() {
+    const pokemonUpload = document.getElementById('pokemon-csv-upload');
+    if (pokemonUpload) {
+        pokemonUpload.addEventListener('change', handlePokemonCSV);
+    }
+
+    const routesUpload = document.getElementById('routes-csv-upload');
+    if (routesUpload) {
+        routesUpload.addEventListener('change', handleRoutesCSV);
+    }
+
+    const spritesUpload = document.getElementById('sprites-upload');
+    if (spritesUpload) {
+        spritesUpload.addEventListener('change', handleSpritesUpload);
+    }
+
+    const gymLeadersUpload = document.getElementById('gym-leaders-csv-upload');
+    if (gymLeadersUpload) {
+        gymLeadersUpload.addEventListener('change', handleGymLeadersCSV);
+    }
+}
+
 // Game data structure 
 let gameData = {
-    player1: {
-        caught: [],
-        team: [null, null, null, null, null, null]
-    },
-    player2: {
-        caught: [],
-        team: [null, null, null, null, null, null]
-    },
+    player1: { caught: [], team: [null, null, null, null, null, null] },
+    player2: { caught: [], team: [null, null, null, null, null, null] },
     soulLinks: [],
     usedRoutes: [],
     failedRoutes: [],
-    playerNames: {
-        player1: 'Player 1',
-        player2: 'Player 2'
-    },
+    playerNames: { player1: 'Player 1', player2: 'Player 2' },
     strictPrimaryTypeMode: true,
     currentGame: null,
     currentGeneration: null,
     gymProgress: {},
-    // Custom ROM support
     isCustomRom: false,
-    customPokemonGens: []
+    customPokemonGens: [],
+    customRomData: null  // <-- ADD THIS LINE
 };
 
 // Carousel state
@@ -345,6 +1031,38 @@ function renderCompactProgressSummary() {
     `;
 
     summaryContainer.innerHTML = summaryHTML;
+}
+
+function getCurrentGymLeaders() {
+    // Handle custom ROM with uploaded gym data
+    if (gameData.currentGeneration === 'custom-rom' && gameData.customRomData) {
+        const customData = gameData.customRomData;
+
+        // Only return data if gym leaders exist
+        if (customData.gymLeaders && customData.gymLeaders.length > 0) {
+            const result = {
+                leaders: customData.gymLeaders,
+                eliteFour: customData.eliteFour || []
+            };
+
+            // Add Kanto leaders if they exist
+            if (customData.kantoLeaders && customData.kantoLeaders.length > 0) {
+                result.kantoLeaders = customData.kantoLeaders;
+            }
+
+            return result;
+        }
+
+        // Return null if no gym data uploaded
+        return null;
+    }
+
+    // Original code for official games
+    if (!gameData.currentGame || !gymLeadersByGame[gameData.currentGame]) {  // FIXED: Changed gymLeaders to gymLeadersByGame
+        return null;
+    }
+
+    return gymLeadersByGame[gameData.currentGame];  // FIXED: Changed gymLeaders to gymLeadersByGame
 }
 
 function toggleGymLeader(leaderId) {
@@ -686,12 +1404,33 @@ const generationData = [
         games: 'Sun/Moon & USUM',
         artwork: 'generationImages/gen7.png'
     },
+    //{
+    //    id: 8,
+    //    name: 'Galar',
+    //    fullName: 'Generation VIII',
+    //    games: 'Sword/Shield',
+    //    artwork: 'generationImages/gen8.png'
+    //},
+    //{
+    //    id: 9,
+    //    name: 'Paldea',
+    //    fullName: 'Generation IX',
+    //    games: 'Scarlet/Violet',
+    //    artwork: 'generationImages/gen9.png'
+    //},
     {
         id: 'custom',
         name: 'Custom',
-        fullName: 'Custom ROM Hack',
+        fullName: 'Basic Custom ROMs',
         games: 'Select your game & Pokemon',
         artwork: 'generationImages/custom.png'
+    },
+    {
+        id: 'custom-rom',
+        name: 'Custom ROM',
+        fullName: 'Custom ROM Hack',
+        games: 'Upload your fakemon & routes',
+        artwork: 'https://via.placeholder.com/300x140/9b59b6/ffffff?text=Custom+ROM'
     }
 ];
 
@@ -703,8 +1442,11 @@ const generationRomanNumerals = {
     4: 'IV',
     5: 'V',
     6: 'VI',
-    7: 'VII'
+    7: 'VII',
+    8: 'VIII',
+    9: 'IX'
 };
+
 
 // Custom ROM selection state
 let customSelectedGame = null;
@@ -734,7 +1476,7 @@ function showCustomRomSelector() {
                 Select Pokemon Generations Available:
             </label>
             <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;">
-                ${[1, 2, 3, 4, 5, 6, 7].map(gen => `
+                ${[1, 2, 3, 4, 5, 6, 7, 8, 9].map(gen => `
                     <label style="display: flex; align-items: center; gap: 5px; cursor: pointer; font-size: 8px;">
                         <input type="checkbox" class="gen-checkbox" value="${gen}" 
                                style="width: 16px; height: 16px; cursor: pointer;">
@@ -842,6 +1584,11 @@ function updatePokemonNamesForCustomRom(generations) {
 function isPokemonValidForGeneration(pokemonName, generation) {
     const cleanName = normalizePokemonNameForAPI(pokemonName);
 
+    if (generation === 'custom-rom' && gameData.customRomData) {
+        const validNames = gameData.customRomData.pokemon.map(p => p.name);
+        return validNames.includes(cleanName);
+    }
+
     if (gameData.isCustomRom) {
         const validNames = pokemonNames.map(name => normalizePokemonNameForAPI(name));
         return validNames.includes(cleanName);
@@ -850,7 +1597,6 @@ function isPokemonValidForGeneration(pokemonName, generation) {
     const validNames = getPokemonNamesUpToGen(generation).map(name => normalizePokemonNameForAPI(name));
     return validNames.includes(cleanName);
 }
-
 
 // Initialize the carousel
 function initializeCarousel() {
@@ -886,6 +1632,7 @@ function initializeCarousel() {
         indicators.appendChild(dot);
     });
 
+    // Update totalCarouselSlides to match the actual number of slides
     currentCarouselIndex = 0;
     totalCarouselSlides = generationData.length;
     updateCarouselPosition();
@@ -971,9 +1718,20 @@ function getGamesForGeneration(generation) {
 // Select generation in the carousel
 function selectGeneration(gen) {
     selectedGeneration = gen;
-
     const gameContainer = document.getElementById('game-select-container');
 
+    // Handle custom ROM upload - CHANGED: Show inline instead of modal
+    if (gen === 'custom-rom') {
+        const genIndex = generationData.findIndex(g => g.id === 'custom-rom');
+        if (genIndex !== -1 && genIndex !== currentCarouselIndex) {
+            currentCarouselIndex = genIndex;
+            updateCarouselPosition();
+        }
+        showCustomRomUploadInterface();
+        return;
+    }
+
+    // Handle existing custom generation selector (keeps working as before)
     if (gen === 'custom') {
         const genIndex = generationData.findIndex(g => g.id === 'custom');
         if (genIndex !== -1 && genIndex !== currentCarouselIndex) {
@@ -984,12 +1742,9 @@ function selectGeneration(gen) {
         return;
     }
 
-    // IMPORTANT: For normal generations, completely clear the container first
-    // This removes any residual custom ROM HTML
+    // Normal generation handling...
     gameContainer.innerHTML = '';
     gameContainer.style.display = 'none';
-
-    // Now proceed with normal generation setup
     updatePokemonNamesForGeneration(gen);
 
     const genIndex = generationData.findIndex(g => g.id === gen);
@@ -1046,10 +1801,17 @@ function selectGame(gameKey) {
 }
 
 // Start the tracker with selected generation and game
+// Start the tracker with selected generation and game
 function startTracker() {
     if (!selectedGeneration || !selectedGame) return;
 
-    // Custom ROM handling
+    // Custom ROM handling (uploaded fakemon/routes)
+    if (selectedGeneration === 'custom-rom') {
+        startCustomRom();
+        return;
+    }
+
+    // Custom ROM handling (multi-generation selector)
     if (selectedGeneration === 'custom') {
         gameData.currentGeneration = 'custom';
         gameData.currentGame = selectedGame;
@@ -1129,13 +1891,21 @@ function switchGame() {
 // Update generation display badge
 function updateGenerationDisplay() {
     const display = document.getElementById('generation-display');
+    if (!display) return;
 
-    // Custom ROM/generation display
-    if (gameData.isCustomRom) {
+    // Custom ROM with uploaded data
+    if (gameData.customRomData && gameData.customRomData.name) {
+        display.textContent = gameData.customRomData.name;
+    }
+    // Multi-gen selector
+    else if (gameData.isCustomRom && Array.isArray(gameData.customPokemonGens) && gameData.customPokemonGens.length > 0) {
         display.textContent = `Custom (Gens ${gameData.customPokemonGens.join(', ')})`;
-    } else if (gameData.currentGeneration) {
+    }
+    // Normal generations
+    else if (gameData.currentGeneration && generationRomanNumerals[gameData.currentGeneration]) {
         display.textContent = `Gen ${generationRomanNumerals[gameData.currentGeneration]}`;
-    } else {
+    }
+    else {
         display.textContent = '';
     }
 }
@@ -1208,9 +1978,36 @@ function getSpriteUrl(pokemonName, generation = null) {
 
 // Fetch Pokemon data from PokeAPI with generation awareness
 async function getPokemonData(name, isShiny = false) {
-    const cleanName = normalizePokemonNameForAPI(name);
+    // Handle custom ROM with uploaded fakemon
+    if (gameData.currentGeneration === 'custom-rom' && gameData.customRomData) {
+        const cleanName = normalizePokemonNameForAPI(name);
+        const pokemon = gameData.customRomData.pokemon.find(p => p.name === cleanName);
 
+        if (pokemon) {
+            let sprite = gameData.customRomData.sprites[cleanName] || pokemon.spriteUrl;
+
+            if (!sprite) {
+                sprite = 'https://via.placeholder.com/96x96/78c850/ffffff?text=' + encodeURIComponent(pokemon.displayName);
+            }
+
+            return {
+                name: pokemon.name,
+                displayName: pokemon.displayName,
+                sprite: sprite,
+                animatedSprite: sprite,
+                types: pokemon.types,
+                isShiny: isShiny
+            };
+        }
+
+        console.error(`Pokemon "${name}" not found in custom ROM data`);
+        return null;
+    }
+
+    // Original PokeAPI logic
+    const cleanName = normalizePokemonNameForAPI(name);
     const cacheKey = `${cleanName}_${isShiny ? 'shiny' : 'normal'}`;
+
     if (pokemonCache[cacheKey]) {
         return pokemonCache[cacheKey];
     }
@@ -1225,7 +2022,7 @@ async function getPokemonData(name, isShiny = false) {
         const data = await response.json();
         const pokemonData = {
             name: data.name,
-            displayName: name.charAt(0).toUpperCase() + name.slice(1), // Use original name for display
+            displayName: name.charAt(0).toUpperCase() + name.slice(1),
             sprite: isShiny ? (data.sprites.front_shiny || data.sprites.front_default) : data.sprites.front_default,
             animatedSprite: isShiny ?
                 (data.sprites.versions?.['generation-v']?.['black-white']?.animated?.front_shiny ||
@@ -1238,7 +2035,7 @@ async function getPokemonData(name, isShiny = false) {
         };
 
         const gen = gameData.currentGeneration;
-        if (gen && gen !== 'custom') {
+        if (gen && gen !== 'custom' && gen !== 'custom-rom') {
             const genSprites = getGenerationSpecificSprite(data.sprites, gen, isShiny);
             if (genSprites) {
                 pokemonData.sprite = genSprites;
@@ -1252,6 +2049,7 @@ async function getPokemonData(name, isShiny = false) {
         return null;
     }
 }
+
 
 // Get generation-specific sprite from sprite data
 function getGenerationSpecificSprite(sprites, generation, isShiny = false) {
@@ -1505,14 +2303,17 @@ function setupInputAutocomplete(inputId, dropdownId) {
             return;
         }
 
-        // Get current generation's Pokemon names
+        // Get current generation's Pokemon names - FIXED FOR CUSTOM ROM
         let currentGenPokemon;
 
-        if (gameData.isCustomRom) {
-            // For custom ROM, use the already populated pokemonNames array
+        if (gameData.currentGeneration === 'custom-rom' && gameData.customRomData) {
+            // Custom ROM with uploaded fakemon
+            currentGenPokemon = gameData.customRomData.pokemon.map(p => p.displayName);
+        } else if (gameData.isCustomRom) {
+            // Custom ROM with selected generations
             currentGenPokemon = pokemonNames;
-        } else if (gameData.currentGeneration) {
-            // For normal generations
+        } else if (gameData.currentGeneration && typeof gameData.currentGeneration === 'number') {
+            // Normal generations (1-7)
             currentGenPokemon = getPokemonNamesUpToGen(gameData.currentGeneration);
         } else {
             // Fallback to all available
@@ -1543,6 +2344,7 @@ function setupInputAutocomplete(inputId, dropdownId) {
 
         dropdown.style.display = 'block';
     });
+
 
     // Handle keyboard navigation
     input.addEventListener('keydown', function (e) {
@@ -1799,13 +2601,13 @@ async function addFailedEncounter() {
 async function addBothPokemon() {
     const addButton = document.getElementById('add-both-btn');
     const failedButton = document.getElementById('failed-btn');
-    
+
     // Disable buttons immediately to prevent double-clicking
     addButton.disabled = true;
     failedButton.disabled = true;
     const originalButtonText = addButton.textContent;
     addButton.textContent = 'Adding...';
-    
+
     try {
         const route = document.getElementById('current-route').value;
         const pokemon1Name = document.getElementById('player1-pokemon').value;
@@ -1838,14 +2640,14 @@ async function addBothPokemon() {
         // NEW: Check for duplicate soul links with same Pokemon names on same route
         const normalizedPokemon1 = normalizePokemonNameForAPI(pokemon1Name);
         const normalizedPokemon2 = normalizePokemonNameForAPI(pokemon2Name);
-        
-        const isDuplicate = gameData.soulLinks.some(link => 
-            link.pokemon1.route === route && 
+
+        const isDuplicate = gameData.soulLinks.some(link =>
+            link.pokemon1.route === route &&
             link.pokemon2.route === route &&
             normalizePokemonNameForAPI(link.pokemon1.name) === normalizedPokemon1 &&
             normalizePokemonNameForAPI(link.pokemon2.name) === normalizedPokemon2
         );
-        
+
         if (isDuplicate) {
             showToast('This exact soul link pair already exists on this route!', 'warning');
             return;
@@ -1962,7 +2764,7 @@ async function addBothPokemon() {
 
         const shinyText = (isShiny1 || isShiny2) ? ' ✨' : '';
         showToast(`Soul Link created: ${pokemon1.nickname} ⟷ ${pokemon2.nickname} on ${route}${shinyText}`, 'success');
-        
+
     } catch (error) {
         console.error('Error adding Pokemon:', error);
         showToast('An error occurred while adding Pokemon. Please try again.', 'error');
@@ -2763,8 +3565,25 @@ function loadData() {
                 gymProgress: loaded.gymProgress || {},
                 // Custom ROM properties
                 isCustomRom: loaded.isCustomRom || false,
-                customPokemonGens: loaded.customPokemonGens || []
+                customPokemonGens: loaded.customPokemonGens || [],
             };
+
+            // Handle custom ROM with uploaded data on load
+            if (gameData.currentGeneration === 'custom-rom' && gameData.customRomData) {
+                customRomData = gameData.customRomData;
+                pokemonNames = customRomData.pokemon.map(p => p.displayName);
+                evolutionLines = { ...customRomData.evolutionLines };
+
+                if (!gameRoutes['custom_rom']) {
+                    gameRoutes['custom_rom'] = {
+                        name: customRomData.name || 'Custom ROM',
+                        generation: 'custom-rom',
+                        routes: [...customRomData.routes]
+                    };
+                }
+
+                console.log(`Loaded custom ROM with ${customRomData.pokemon.length} Pokemon and ${customRomData.routes.length} routes`);
+            }
 
             // Handle custom ROM on load
             if (gameData.isCustomRom && gameData.customPokemonGens.length > 0) {
@@ -2845,6 +3664,14 @@ function clearAllData() {
             customPokemonGens: []
         };
 
+        customRomData = {
+            pokemon: [],
+            routes: [],
+            sprites: {},
+            evolutionLines: {},
+            name: 'Custom ROM'
+        }
+
         // Reset custom ROM state variables
         customSelectedGame = null;
         customSelectedPokemonGens = [];
@@ -2904,6 +3731,7 @@ function importData() {
 
 // Handle file import with generation support
 document.addEventListener('DOMContentLoaded', function () {
+    setupCustomRomListeners();
     const importFile = document.getElementById('importFile');
     if (importFile) {
         importFile.addEventListener('change', function (e) {
@@ -4408,13 +5236,23 @@ function updateStreamerWindowSmart() {
 // Helper functions for targeted updates
 function updateStreamerGeneration(doc, generation) {
     const genInfo = doc.getElementById('streamer-gen-info');
-    if (genInfo) {
-        if (gameData.isCustomRom) {
-            genInfo.textContent = `Custom (${gameData.customPokemonGens.join(', ')})`;
-        } else if (generation) {
-            const genDisplay = generationRomanNumerals[generation] || generation;
-            genInfo.textContent = `Gen ${genDisplay}`;
-        }
+    if (!genInfo) return;
+
+    // Custom ROM with uploaded data (check customRomData exists)
+    if (gameData.customRomData && gameData.customRomData.name) {
+        genInfo.textContent = gameData.customRomData.name;
+    }
+    // Multi-gen selector (check array has items)
+    else if (gameData.isCustomRom && Array.isArray(gameData.customPokemonGens) && gameData.customPokemonGens.length > 0) {
+        genInfo.textContent = `Custom (Gens ${gameData.customPokemonGens.join(', ')})`;
+    }
+    // Normal generations
+    else if (typeof generation === 'number' && generationRomanNumerals[generation]) {
+        genInfo.textContent = `Gen ${generationRomanNumerals[generation]}`;
+    }
+    // Fallback
+    else {
+        genInfo.textContent = 'Pokemon';
     }
 }
 

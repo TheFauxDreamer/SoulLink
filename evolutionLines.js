@@ -1350,6 +1350,363 @@ const evolutionLinesByGeneration = {
         'exeggutor-alola': ['exeggcute', 'exeggutor-alola'],
 
         'marowak-alola': ['cubone', 'marowak-alola']
+    },
+
+    // Generation 8 Evolution Lines (Galar)
+    gen8: {
+        // Starters
+        'grookey': ['grookey', 'thwackey', 'rillaboom'],
+        'thwackey': ['grookey', 'thwackey', 'rillaboom'],
+        'rillaboom': ['grookey', 'thwackey', 'rillaboom'],
+
+        'scorbunny': ['scorbunny', 'raboot', 'cinderace'],
+        'raboot': ['scorbunny', 'raboot', 'cinderace'],
+        'cinderace': ['scorbunny', 'raboot', 'cinderace'],
+
+        'sobble': ['sobble', 'drizzile', 'inteleon'],
+        'drizzile': ['sobble', 'drizzile', 'inteleon'],
+        'inteleon': ['sobble', 'drizzile', 'inteleon'],
+
+        // Early Route Pokemon
+        'skwovet': ['skwovet', 'greedent'],
+        'greedent': ['skwovet', 'greedent'],
+
+        'rookidee': ['rookidee', 'corvisquire', 'corviknight'],
+        'corvisquire': ['rookidee', 'corvisquire', 'corviknight'],
+        'corviknight': ['rookidee', 'corvisquire', 'corviknight'],
+
+        'blipbug': ['blipbug', 'dottler', 'orbeetle'],
+        'dottler': ['blipbug', 'dottler', 'orbeetle'],
+        'orbeetle': ['blipbug', 'dottler', 'orbeetle'],
+
+        'nickit': ['nickit', 'thievul'],
+        'thievul': ['nickit', 'thievul'],
+
+        'gossifleur': ['gossifleur', 'eldegoss'],
+        'eldegoss': ['gossifleur', 'eldegoss'],
+
+        'wooloo': ['wooloo', 'dubwool'],
+        'dubwool': ['wooloo', 'dubwool'],
+
+        'chewtle': ['chewtle', 'drednaw'],
+        'drednaw': ['chewtle', 'drednaw'],
+
+        'yamper': ['yamper', 'boltund'],
+        'boltund': ['yamper', 'boltund'],
+
+        'rolycoly': ['rolycoly', 'carkol', 'coalossal'],
+        'carkol': ['rolycoly', 'carkol', 'coalossal'],
+        'coalossal': ['rolycoly', 'carkol', 'coalossal'],
+
+        'applin': ['applin', 'flapple'],
+        'flapple': ['applin', 'flapple'],
+        'appletun': ['applin', 'appletun'],
+        'dipplin': ['applin', 'dipplin'], // Gen 9 DLC evolution
+
+        'silicobra': ['silicobra', 'sandaconda'],
+        'sandaconda': ['silicobra', 'sandaconda'],
+
+        'cramorant': ['cramorant'],
+
+        'arrokuda': ['arrokuda', 'barraskewda'],
+        'barraskewda': ['arrokuda', 'barraskewda'],
+
+        'toxel': ['toxel', 'toxtricity'],
+        'toxtricity': ['toxel', 'toxtricity'],
+
+        'sizzlipede': ['sizzlipede', 'centiskorch'],
+        'centiskorch': ['sizzlipede', 'centiskorch'],
+
+        'clobbopus': ['clobbopus', 'grapploct'],
+        'grapploct': ['clobbopus', 'grapploct'],
+
+        'sinistea': ['sinistea', 'polteageist'],
+        'polteageist': ['sinistea', 'polteageist'],
+
+        'hatenna': ['hatenna', 'hattrem', 'hatterene'],
+        'hattrem': ['hatenna', 'hattrem', 'hatterene'],
+        'hatterene': ['hatenna', 'hattrem', 'hatterene'],
+
+        'impidimp': ['impidimp', 'morgrem', 'grimmsnarl'],
+        'morgrem': ['impidimp', 'morgrem', 'grimmsnarl'],
+        'grimmsnarl': ['impidimp', 'morgrem', 'grimmsnarl'],
+
+        'milcery': ['milcery', 'alcremie'],
+        'alcremie': ['milcery', 'alcremie'],
+
+        'falinks': ['falinks'],
+
+        'pincurchin': ['pincurchin'],
+
+        'snom': ['snom', 'frosmoth'],
+        'frosmoth': ['snom', 'frosmoth'],
+
+        'stonjourner': ['stonjourner'],
+
+        'eiscue': ['eiscue'],
+
+        'indeedee': ['indeedee'],
+
+        'morpeko': ['morpeko'],
+
+        'cufant': ['cufant', 'copperajah'],
+        'copperajah': ['cufant', 'copperajah'],
+
+        'dracozolt': ['dracozolt'],
+        'arctozolt': ['arctozolt'],
+        'dracovish': ['dracovish'],
+        'arctovish': ['arctovish'],
+
+        'duraludon': ['duraludon', 'archaludon'], // Archaludon added in Gen 9
+
+        'dreepy': ['dreepy', 'drakloak', 'dragapult'],
+        'drakloak': ['dreepy', 'drakloak', 'dragapult'],
+        'dragapult': ['dreepy', 'drakloak', 'dragapult'],
+
+        // Galarian forms and their evolutions
+        'meowth-galar': ['meowth-galar', 'perrserker'],
+        'perrserker': ['meowth-galar', 'perrserker'],
+
+        'ponyta-galar': ['ponyta-galar', 'rapidash-galar'],
+        'rapidash-galar': ['ponyta-galar', 'rapidash-galar'],
+
+        'slowpoke-galar': ['slowpoke-galar', 'slowbro-galar'],
+        'slowbro-galar': ['slowpoke-galar', 'slowbro-galar'],
+        'slowking-galar': ['slowpoke-galar', 'slowking-galar'],
+
+        'farfetch\'d-galar': ['farfetch\'d-galar', 'sirfetch\'d'],
+        'sirfetch\'d': ['farfetch\'d-galar', 'sirfetch\'d'],
+
+        'weezing-galar': ['koffing', 'weezing-galar'],
+
+        'mr. mime-galar': ['mr. mime-galar', 'mr. rime'],
+        'mr. rime': ['mr. mime-galar', 'mr. rime'],
+
+        'corsola-galar': ['corsola-galar', 'cursola'],
+        'cursola': ['corsola-galar', 'cursola'],
+
+        'zigzagoon-galar': ['zigzagoon-galar', 'linoone-galar', 'obstagoon'],
+        'linoone-galar': ['zigzagoon-galar', 'linoone-galar', 'obstagoon'],
+        'obstagoon': ['zigzagoon-galar', 'linoone-galar', 'obstagoon'],
+
+        'darumaka-galar': ['darumaka-galar', 'darmanitan-galar'],
+        'darmanitan-galar': ['darumaka-galar', 'darmanitan-galar'],
+
+        'yamask-galar': ['yamask-galar', 'runerigus'],
+        'runerigus': ['yamask-galar', 'runerigus'],
+
+        'stunfisk-galar': ['stunfisk-galar'],
+
+        // New evolutions for old Pokemon
+        'obstagoon': ['zigzagoon-galar', 'linoone-galar', 'obstagoon'],
+        'perrserker': ['meowth-galar', 'perrserker'],
+        'cursola': ['corsola-galar', 'cursola'],
+        'sirfetch\'d': ['farfetch\'d-galar', 'sirfetch\'d'],
+        'mr. rime': ['mr. mime-galar', 'mr. rime'],
+        'runerigus': ['yamask-galar', 'runerigus'],
+
+        // Legendary Pokemon
+        'zacian': ['zacian'],
+        'zamazenta': ['zamazenta'],
+        'eternatus': ['eternatus'],
+
+        // Crown Tundra Legendaries
+        'kubfu': ['kubfu', 'urshifu'],
+        'urshifu': ['kubfu', 'urshifu'],
+
+        'zarude': ['zarude'],
+        'regieleki': ['regieleki'],
+        'regidrago': ['regidrago'],
+        'glastrier': ['glastrier'],
+        'spectrier': ['spectrier'],
+        'calyrex': ['calyrex']
+    },
+
+    // Generation 9 Evolution Lines (Paldea)
+    gen9: {
+        // Starters
+        'sprigatito': ['sprigatito', 'floragato', 'meowscarada'],
+        'floragato': ['sprigatito', 'floragato', 'meowscarada'],
+        'meowscarada': ['sprigatito', 'floragato', 'meowscarada'],
+
+        'fuecoco': ['fuecoco', 'crocalor', 'skeledirge'],
+        'crocalor': ['fuecoco', 'crocalor', 'skeledirge'],
+        'skeledirge': ['fuecoco', 'crocalor', 'skeledirge'],
+
+        'quaxly': ['quaxly', 'quaxwell', 'quaquaval'],
+        'quaxwell': ['quaxly', 'quaxwell', 'quaquaval'],
+        'quaquaval': ['quaxly', 'quaxwell', 'quaquaval'],
+
+        // Early Route Pokemon
+        'lechonk': ['lechonk', 'oinkologne'],
+        'oinkologne': ['lechonk', 'oinkologne'],
+
+        'tarountula': ['tarountula', 'spidops'],
+        'spidops': ['tarountula', 'spidops'],
+
+        'nymble': ['nymble', 'lokix'],
+        'lokix': ['nymble', 'lokix'],
+
+        'pawmi': ['pawmi', 'pawmo', 'pawmot'],
+        'pawmo': ['pawmi', 'pawmo', 'pawmot'],
+        'pawmot': ['pawmi', 'pawmo', 'pawmot'],
+
+        'tandemaus': ['tandemaus', 'maushold'],
+        'maushold': ['tandemaus', 'maushold'],
+
+        'fidough': ['fidough', 'dachsbun'],
+        'dachsbun': ['fidough', 'dachsbun'],
+
+        'smoliv': ['smoliv', 'dolliv', 'arboliva'],
+        'dolliv': ['smoliv', 'dolliv', 'arboliva'],
+        'arboliva': ['smoliv', 'dolliv', 'arboliva'],
+
+        'squawkabilly': ['squawkabilly'],
+
+        'nacli': ['nacli', 'naclstack', 'garganacl'],
+        'naclstack': ['nacli', 'naclstack', 'garganacl'],
+        'garganacl': ['nacli', 'naclstack', 'garganacl'],
+
+        'charcadet': ['charcadet', 'armarouge'],
+        'armarouge': ['charcadet', 'armarouge'],
+        'ceruledge': ['charcadet', 'ceruledge'],
+
+        'tadbulb': ['tadbulb', 'bellibolt'],
+        'bellibolt': ['tadbulb', 'bellibolt'],
+
+        'wattrel': ['wattrel', 'kilowattrel'],
+        'kilowattrel': ['wattrel', 'kilowattrel'],
+
+        'maschiff': ['maschiff', 'mabosstiff'],
+        'mabosstiff': ['maschiff', 'mabosstiff'],
+
+        'shroodle': ['shroodle', 'grafaiai'],
+        'grafaiai': ['shroodle', 'grafaiai'],
+
+        'bramblin': ['bramblin', 'brambleghast'],
+        'brambleghast': ['bramblin', 'brambleghast'],
+
+        'toedscool': ['toedscool', 'toedscruel'],
+        'toedscruel': ['toedscool', 'toedscruel'],
+
+        'klawf': ['klawf'],
+
+        'capsakid': ['capsakid', 'scovillain'],
+        'scovillain': ['capsakid', 'scovillain'],
+
+        'rellor': ['rellor', 'rabsca'],
+        'rabsca': ['rellor', 'rabsca'],
+
+        'flittle': ['flittle', 'espathra'],
+        'espathra': ['flittle', 'espathra'],
+
+        'tinkatink': ['tinkatink', 'tinkatuff', 'tinkaton'],
+        'tinkatuff': ['tinkatink', 'tinkatuff', 'tinkaton'],
+        'tinkaton': ['tinkatink', 'tinkatuff', 'tinkaton'],
+
+        'wiglett': ['wiglett', 'wugtrio'],
+        'wugtrio': ['wiglett', 'wugtrio'],
+
+        'bombirdier': ['bombirdier'],
+
+        'finizen': ['finizen', 'palafin'],
+        'palafin': ['finizen', 'palafin'],
+
+        'varoom': ['varoom', 'revavroom'],
+        'revavroom': ['varoom', 'revavroom'],
+
+        'cyclizar': ['cyclizar'],
+
+        'orthworm': ['orthworm'],
+
+        'glimmet': ['glimmet', 'glimmora'],
+        'glimmora': ['glimmet', 'glimmora'],
+
+        'greavard': ['greavard', 'houndstone'],
+        'houndstone': ['greavard', 'houndstone'],
+
+        'flamigo': ['flamigo'],
+
+        'cetoddle': ['cetoddle', 'cetitan'],
+        'cetitan': ['cetoddle', 'cetitan'],
+
+        'veluza': ['veluza'],
+
+        'dondozo': ['dondozo'],
+
+        'tatsugiri': ['tatsugiri'],
+
+        'annihilape': ['mankey', 'primeape', 'annihilape'],
+
+        'clodsire': ['wooper-paldea', 'clodsire'],
+        'wooper-paldea': ['wooper-paldea', 'clodsire'],
+
+        'farigiraf': ['girafarig', 'farigiraf'],
+
+        'dudunsparce': ['dunsparce', 'dudunsparce'],
+
+        'kingambit': ['pawniard', 'bisharp', 'kingambit'],
+
+        'great tusk': ['great tusk'],
+        'scream tail': ['scream tail'],
+        'brute bonnet': ['brute bonnet'],
+        'flutter mane': ['flutter mane'],
+        'slither wing': ['slither wing'],
+        'sandy shocks': ['sandy shocks'],
+        'iron treads': ['iron treads'],
+        'iron bundle': ['iron bundle'],
+        'iron hands': ['iron hands'],
+        'iron jugulis': ['iron jugulis'],
+        'iron moth': ['iron moth'],
+        'iron thorns': ['iron thorns'],
+
+        'frigibax': ['frigibax', 'arctibax', 'baxcalibur'],
+        'arctibax': ['frigibax', 'arctibax', 'baxcalibur'],
+        'baxcalibur': ['frigibax', 'arctibax', 'baxcalibur'],
+
+        'gimmighoul': ['gimmighoul', 'gholdengo'],
+        'gholdengo': ['gimmighoul', 'gholdengo'],
+
+        'wo-chien': ['wo-chien'],
+        'chien-pao': ['chien-pao'],
+        'ting-lu': ['ting-lu'],
+        'chi-yu': ['chi-yu'],
+
+        'roaring moon': ['roaring moon'],
+        'iron valiant': ['iron valiant'],
+
+        'koraidon': ['koraidon'],
+        'miraidon': ['miraidon'],
+
+        // The Teal Mask DLC
+        'poltchageist': ['poltchageist', 'sinistcha'],
+        'sinistcha': ['poltchageist', 'sinistcha'],
+
+        'okidogi': ['okidogi'],
+        'munkidori': ['munkidori'],
+        'fezandipiti': ['fezandipiti'],
+        'ogerpon': ['ogerpon'],
+
+        // The Indigo Disk DLC
+        'dipplin': ['applin', 'dipplin', 'hydrapple'],
+        'hydrapple': ['applin', 'dipplin', 'hydrapple'],
+
+        'archaludon': ['duraludon', 'archaludon'],
+
+        'gouging fire': ['gouging fire'],
+        'raging bolt': ['raging bolt'],
+        'iron boulder': ['iron boulder'],
+        'iron crown': ['iron crown'],
+
+        'terapagos': ['terapagos'],
+
+        'pecharunt': ['pecharunt'],
+
+        // Paldean forms
+        'wooper-paldea': ['wooper-paldea', 'clodsire'],
+        'tauros-paldea-combat': ['tauros-paldea-combat'],
+        'tauros-paldea-blaze': ['tauros-paldea-blaze'],
+        'tauros-paldea-aqua': ['tauros-paldea-aqua']
     }
 };
 
@@ -1357,7 +1714,7 @@ const evolutionLinesByGeneration = {
 function getEvolutionLines(generation) {
     let combinedLines = {};
 
-    for (let gen = 1; gen <= generation && gen <= 7; gen++) {
+    for (let gen = 1; gen <= generation && gen <= 9; gen++) {
         const genLines = evolutionLinesByGeneration[`gen${gen}`] || {};
         // Merge with existing lines (later generations may update evolution lines)
         combinedLines = { ...combinedLines, ...genLines };
@@ -1367,7 +1724,7 @@ function getEvolutionLines(generation) {
 }
 
 // For backwards compatibility
-let evolutionLines = getEvolutionLines(7);
+let evolutionLines = getEvolutionLines(9);
 
 // Update evolution lines based on selected generation
 function updateEvolutionLinesForGeneration(generation) {

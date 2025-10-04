@@ -183,13 +183,157 @@ const pokemonNamesByGeneration = {
         'Tapu Koko', 'Tapu Lele', 'Tapu Bulu', 'Tapu Fini',
         'Cosmog', 'Cosmoem', 'Solgaleo', 'Lunala', 'Necrozma',
         'Magearna', 'Marshadow', 'Zeraora'
+    ],
+    // Generation 8 - Galar (89 new Pokemon + Galarian forms)
+    gen8: [
+        // Starters
+        'Grookey', 'Thwackey', 'Rillaboom',
+        'Scorbunny', 'Raboot', 'Cinderace',
+        'Sobble', 'Drizzile', 'Inteleon',
+
+        // Early Route
+        'Skwovet', 'Greedent', 'Rookidee', 'Corvisquire', 'Corviknight',
+        'Blipbug', 'Dottler', 'Orbeetle', 'Nickit', 'Thievul',
+        'Gossifleur', 'Eldegoss', 'Wooloo', 'Dubwool',
+        'Chewtle', 'Drednaw', 'Yamper', 'Boltund',
+        'Rolycoly', 'Carkol', 'Coalossal',
+
+        // Mid-game
+        'Applin', 'Flapple', 'Appletun',
+        'Silicobra', 'Sandaconda', 'Cramorant',
+        'Arrokuda', 'Barraskewda', 'Toxel', 'Toxtricity',
+        'Sizzlipede', 'Centiskorch', 'Clobbopus', 'Grapploct',
+        'Sinistea', 'Polteageist',
+        'Hatenna', 'Hattrem', 'Hatterene',
+        'Impidimp', 'Morgrem', 'Grimmsnarl',
+        'Milcery', 'Alcremie', 'Falinks', 'Pincurchin',
+        'Snom', 'Frosmoth', 'Stonjourner', 'Eiscue',
+        'Indeedee', 'Morpeko',
+        'Cufant', 'Copperajah',
+
+        // Fossils
+        'Dracozolt', 'Arctozolt', 'Dracovish', 'Arctovish',
+
+        // Pseudo-legendary
+        'Duraludon', 'Dreepy', 'Drakloak', 'Dragapult',
+
+        // Galarian Forms and New Evolutions
+        'Meowth-galar', 'Perrserker',
+        'Ponyta-galar', 'Rapidash-galar',
+        'Slowpoke-galar', 'Slowbro-galar', 'Slowking-galar',
+        'Farfetchd-galar', 'Sirfetchd',
+        'Weezing-galar',
+        'Mr. Mime-galar', 'Mr. Rime',
+        'Corsola-galar', 'Cursola',
+        'Zigzagoon-galar', 'Linoone-galar', 'Obstagoon',
+        'Darumaka-galar', 'Darmanitan-galar',
+        'Yamask-galar', 'Runerigus',
+        'Stunfisk-galar',
+
+        // Legendaries
+        'Zacian', 'Zamazenta', 'Eternatus',
+
+        // Isle of Armor / Crown Tundra
+        'Kubfu', 'Urshifu',
+        'Zarude', 'Regieleki', 'Regidrago',
+        'Glastrier', 'Spectrier', 'Calyrex'
+    ],
+
+    // Generation 9 - Paldea (105+ new Pokemon)
+    gen9: [
+        // Starters
+        'Sprigatito', 'Floragato', 'Meowscarada',
+        'Fuecoco', 'Crocalor', 'Skeledirge',
+        'Quaxly', 'Quaxwell', 'Quaquaval',
+
+        // Early/Mid Route
+        'Lechonk', 'Oinkologne',
+        'Tarountula', 'Spidops',
+        'Nymble', 'Lokix',
+        'Pawmi', 'Pawmo', 'Pawmot',
+        'Tandemaus', 'Maushold',
+        'Fidough', 'Dachsbun',
+        'Smoliv', 'Dolliv', 'Arboliva',
+        'Squawkabilly',
+        'Nacli', 'Naclstack', 'Garganacl',
+        'Charcadet', 'Armarouge', 'Ceruledge',
+        'Tadbulb', 'Bellibolt',
+        'Wattrel', 'Kilowattrel',
+        'Maschiff', 'Mabosstiff',
+        'Shroodle', 'Grafaiai',
+        'Bramblin', 'Brambleghast',
+        'Toedscool', 'Toedscruel',
+        'Klawf',
+        'Capsakid', 'Scovillain',
+        'Rellor', 'Rabsca',
+        'Flittle', 'Espathra',
+        'Tinkatink', 'Tinkatuff', 'Tinkaton',
+        'Wiglett', 'Wugtrio',
+        'Bombirdier',
+        'Finizen', 'Palafin',
+        'Varoom', 'Revavroom',
+        'Cyclizar',
+        'Orthworm',
+        'Glimmet', 'Glimmora',
+        'Greavard', 'Houndstone',
+        'Flamigo',
+        'Cetoddle', 'Cetitan',
+        'Veluza',
+        'Dondozo',
+        'Tatsugiri',
+
+        // New evolutions for old Pokemon
+        'Annihilape',
+        'Clodsire',
+        'Farigiraf',
+        'Dudunsparce',
+        'Kingambit',
+
+        // Paradox Pokemon (Past)
+        'Great Tusk', 'Scream Tail', 'Brute Bonnet',
+        'Flutter Mane', 'Slither Wing', 'Sandy Shocks',
+        'Roaring Moon',
+
+        // Paradox Pokemon (Future)
+        'Iron Treads', 'Iron Bundle', 'Iron Hands',
+        'Iron Jugulis', 'Iron Moth', 'Iron Thorns',
+        'Iron Valiant',
+
+        // Pseudo-legendary
+        'Frigibax', 'Arctibax', 'Baxcalibur',
+
+        // Special
+        'Gimmighoul', 'Gholdengo',
+
+        // Treasures of Ruin
+        'Wo-Chien', 'Chien-Pao', 'Ting-Lu', 'Chi-Yu',
+
+        // Box Legendaries
+        'Koraidon', 'Miraidon',
+
+        // The Teal Mask DLC
+        'Poltchageist', 'Sinistcha',
+        'Okidogi', 'Munkidori', 'Fezandipiti',
+        'Ogerpon',
+
+        // The Indigo Disk DLC
+        'Dipplin', 'Hydrapple',
+        'Archaludon',
+        'Gouging Fire', 'Raging Bolt',
+        'Iron Boulder', 'Iron Crown',
+        'Terapagos',
+        'Pecharunt',
+
+        // Paldean Forms
+        'Wooper-paldea',
+        'Tauros-paldea-combat', 'Tauros-paldea-blaze', 'Tauros-paldea-aqua'
     ]
 };
 
 // Helper function to get all Pokemon names up to a specific generation
 function getPokemonNamesUpToGen(generation) {
     let allNames = [];
-    for (let gen = 1; gen <= generation && gen <= 7; gen++) {
+    for (let gen = 1; gen <= generation && gen <= 9; gen++) {
         allNames = allNames.concat(pokemonNamesByGeneration[`gen${gen}`] || []);
     }
     return allNames;
@@ -203,5 +347,5 @@ function updatePokemonNamesForGeneration(generation) {
     pokemonNames = getPokemonNamesUpToGen(generation);
 }
 
-// Initialize with all Pokemon (Gen 1-7)
-pokemonNames = getPokemonNamesUpToGen(7);
+// Initialize with all Pokemon (Gen 1-9)
+pokemonNames = getPokemonNamesUpToGen(9);

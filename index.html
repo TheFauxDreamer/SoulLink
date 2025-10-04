@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en"> 
+<html lang="en">
 
 <head>
     <meta charset="UTF-8">
@@ -1552,6 +1552,62 @@
             opacity: 0.5;
             background: #ffe0e0;
             cursor: not-allowed;
+        }
+
+        .upload-status-info {
+            color: #3498db;
+        }
+
+        .upload-status-success {
+            color: #27ae60;
+            font-weight: bold;
+        }
+
+        .upload-status-error {
+            color: #e74c3c;
+            font-weight: bold;
+        }
+
+        /* Drag & Drop Styles */
+        .drop-zone {
+            border: 2px dashed #78c850;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            background: #f0f8ff;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 15px;
+        }
+
+        .drop-zone:hover {
+            background: #e8f5e8;
+            border-color: #4a9d2f;
+        }
+
+        .drop-zone.drag-over {
+            background: #d0ffd0;
+            border-color: #2a5834;
+            border-style: solid;
+            transform: scale(1.02);
+        }
+
+        .drop-zone-label {
+            font-size: 9px;
+            color: #2a5834;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+
+        .drop-zone-hint {
+            font-size: 7px;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        .drop-zone-icon {
+            font-size: 24px;
+            margin-bottom: 8px;
         }
 
         /* RESTORED: Compact sprite styling */
