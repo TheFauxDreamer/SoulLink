@@ -22,6 +22,12 @@ Try it out: https://soullink--laughing-lichterman-c3b6ff.netlify.app
 - **Mix & Match Generations** - select any base game, with any combination of pokemon gens from 1-9
 - **Custom ROM Hack Support** - playing a completely custom ROM hack game? We now support fakemon, sprits, routes etc!
 
+### WIP Features
+- **Gen 5 era sprites** - _In Progress_ - prefer the look of the DS era games? Toggle DS sprites (thanks to PK Showdown)
+- **Gen 3 era sprites** - same as the above, just need to find sprites in this style for all generations
+- **Simple ROM Hacks** - add support for ROM hacks that just have a custom map/gyms but use legit pokemon
+
+
 ## How it works
 
 Pick your generation & game, add Pokémon as you catch them, and it handles the rest. Click to add a soul link to your team and it'll warn you about rule violations. When a Pokémon faints, its soul link partner gets removed automatically and keeps track.
