@@ -21,9 +21,9 @@ Try it out: https://soullink--laughing-lichterman-c3b6ff.netlify.app
 - **Shiny support** - you caught a shiny on your run? Totally legit?... you can show the shiny sprite variant!
 - **Mix & Match Generations** - select any base game, with any combination of pokemon gens from 1-9
 - **Custom ROM Hack Support** - playing a completely custom ROM hack game? We now support fakemon, sprits, routes etc!
+- **Gen 5 era sprites** - prefer the look of the DS era games? Toggle DS sprites (thanks to PK Showdown)
 
 ### WIP Features
-- **Gen 5 era sprites** - _In Progress_ - prefer the look of the DS era games? Toggle DS sprites (thanks to PK Showdown)
 - **Gen 3 era sprites** - same as the above, just need to find sprites in this style for all generations
 - **Simple ROM Hacks** - add support for ROM hacks that just have a custom map/gyms but use legit pokemon
 
