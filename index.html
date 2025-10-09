@@ -1952,6 +1952,13 @@
                     <label for="game-select">Game:</label>
                     <select id="game-select" onchange="switchGame()"></select>
                 </div>
+                <div class="game-selector" style="margin-left: 10px;">
+                    <label for="sprite-style-select">Sprites:</label>
+                    <select id="sprite-style-select" onchange="toggleSpriteStyle()">
+                        <option value="modern">Modern</option>
+                        <option value="ds">DS Era (Gen 5)</option>
+                    </select>
+                </div>
                 <button onclick="clearAllData()">Clear All</button>
                 <button onclick="exportData()">Export Save</button>
                 <button onclick="importData()">Import Save</button>

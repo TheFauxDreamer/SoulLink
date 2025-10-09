@@ -707,7 +707,8 @@ let gameData = {
     gymProgress: {},
     isCustomRom: false,
     customPokemonGens: [],
-    customRomData: null  // <-- ADD THIS LINE
+    customRomData: null,
+    spriteStyle: 'modern'  // 'modern' or 'ds'
 };
 
 // Carousel state
@@ -1344,6 +1345,224 @@ function testToast() {
     setTimeout(() => showToast('Test error message! ❌', 'error'), 1000);
     setTimeout(() => showToast('Test info message! ℹ️', 'info'), 2000);
     setTimeout(() => showToast('Test warning message! ⚠️', 'warning'), 3000);
+}
+
+// Get appropriate sprite URL for DS-style sprites
+function getDSSpriteUrl(pokemonName, isShiny = false) {
+    const cleanName = normalizePokemonNameForAPI(pokemonName);
+    
+    // Pokemon Showdown sprite repository - has DS-style sprites for all generations
+    // Primary: gen5ani (animated) - Secondary fallback: gen5 (static)
+    if (isShiny) {
+        return `https://play.pokemonshowdown.com/sprites/gen5ani-shiny/${cleanName}.gif`;
+    } else {
+        return `https://play.pokemonshowdown.com/sprites/gen5ani/${cleanName}.gif`;
+    }
+}
+
+// Get fallback sprite URL for Pokemon without animated sprites
+function getDSSpriteFallback(pokemonName, isShiny = false) {
+    const cleanName = normalizePokemonNameForAPI(pokemonName);
+    
+    if (isShiny) {
+        return `https://play.pokemonshowdown.com/sprites/gen5-shiny/${cleanName}.png`;
+    } else {
+        return `https://play.pokemonshowdown.com/sprites/gen5/${cleanName}.png`;
+    }
+}
+
+// Update all existing Pokemon sprites to match current style preference
+async function updateAllPokemonSprites() {
+    const useDSSprites = gameData.spriteStyle === 'ds';
+    
+    // Function to update a single Pokemon's sprites
+    const updatePokemonSprites = async (pokemon) => {
+        // Skip custom ROM Pokemon
+        if (gameData.currentGeneration === 'custom-rom' && gameData.customRomData) {
+            return pokemon;
+        }
+        
+        const cleanName = normalizePokemonNameForAPI(pokemon.name);
+        
+        if (useDSSprites) {
+            // Update to DS sprites
+            const dsSprite = getDSSpriteUrl(cleanName, pokemon.isShiny);
+            const dsFallback = getDSSpriteFallback(cleanName, pokemon.isShiny);
+            
+            pokemon.sprite = dsSprite;
+            pokemon.animatedSprite = dsSprite;
+            pokemon.fallbackSprite = dsFallback;
+        } else {
+            // Fetch modern sprites from PokeAPI
+            try {
+                const response = await fetch(`https://pokeapi.co/api/v2/pokemon/${cleanName}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    
+                    pokemon.sprite = pokemon.isShiny ? 
+                        (data.sprites.front_shiny || data.sprites.front_default) : 
+                        data.sprites.front_default;
+                    
+                    pokemon.animatedSprite = pokemon.isShiny ?
+                        (data.sprites.versions?.['generation-v']?.['black-white']?.animated?.front_shiny ||
+                            data.sprites.versions?.['generation-v']?.['black-white']?.animated?.front_default ||
+                            data.sprites.front_shiny ||
+                            data.sprites.front_default) :
+                        (data.sprites.versions?.['generation-v']?.['black-white']?.animated?.front_default || 
+                            data.sprites.front_default);
+                    
+                    // Remove DS fallback when using modern sprites
+                    delete pokemon.fallbackSprite;
+                }
+            } catch (error) {
+                console.error(`Error updating sprites for ${pokemon.name}:`, error);
+            }
+        }
+        
+        return pokemon;
+    };
+    
+    // Update all caught Pokemon for both players
+    const updatePromises = [];
+    
+    for (let i = 0; i < gameData.player1.caught.length; i++) {
+        updatePromises.push(
+            updatePokemonSprites(gameData.player1.caught[i]).then(updated => {
+                gameData.player1.caught[i] = updated;
+            })
+        );
+    }
+    
+    for (let i = 0; i < gameData.player2.caught.length; i++) {
+        updatePromises.push(
+            updatePokemonSprites(gameData.player2.caught[i]).then(updated => {
+                gameData.player2.caught[i] = updated;
+            })
+        );
+    }
+    
+    // Wait for all updates to complete
+    await Promise.all(updatePromises);
+    
+    // Update team references (they point to the same objects, but ensure consistency)
+    [1, 2].forEach(player => {
+        gameData[`player${player}`].team = gameData[`player${player}`].team.map(teamPokemon => {
+            if (!teamPokemon) return null;
+            
+            // Find the updated version in caught list
+            const updatedPokemon = gameData[`player${player}`].caught.find(
+                p => p.id === teamPokemon.id
+            );
+            
+            return updatedPokemon || teamPokemon;
+        });
+    });
+    
+    // Update soul links to reference updated Pokemon
+    gameData.soulLinks = gameData.soulLinks.map(link => {
+        const updated1 = gameData.player1.caught.find(p => p.id === link.pokemon1.id) ||
+                        gameData.player2.caught.find(p => p.id === link.pokemon1.id);
+        const updated2 = gameData.player1.caught.find(p => p.id === link.pokemon2.id) ||
+                        gameData.player2.caught.find(p => p.id === link.pokemon2.id);
+        
+        return {
+            pokemon1: updated1 || link.pokemon1,
+            pokemon2: updated2 || link.pokemon2
+        };
+    });
+}
+
+// Toggle between modern and DS sprite styles
+async function toggleSpriteStyle() {
+    const select = document.getElementById('sprite-style-select');
+    const newStyle = select.value;
+    
+    if (gameData.spriteStyle === newStyle) return;
+    
+    // Show loading state
+    const styleText = newStyle === 'ds' ? 'DS Era (Gen 5)' : 'Modern';
+    showToast(`Updating all sprites to ${styleText}... Please wait.`, 'info', 2000);
+    
+    // Disable the selector during update
+    select.disabled = true;
+    
+    gameData.spriteStyle = newStyle;
+    
+    // Clear sprite cache to force reload with new style
+    pokemonCache = {};
+    
+    // Update all existing Pokemon sprites
+    await updateAllPokemonSprites();
+    
+    saveData();
+    
+    // Re-render everything to show new sprites
+    renderAll();
+    
+    // Update streamer window if open
+    if (streamerWindow && !streamerWindow.closed) {
+        updateStreamerWindow();
+    }
+    
+    // Re-enable selector
+    select.disabled = false;
+    
+    showToast(`All sprites updated to ${styleText}!`, 'success');
+}
+
+// Initialize sprite style selector
+function initializeSpriteStyleSelector() {
+    const select = document.getElementById('sprite-style-select');
+    if (select && gameData.spriteStyle) {
+        select.value = gameData.spriteStyle;
+    }
+}
+
+// Helper function to get sprite URL with fallback support
+function getSpriteWithFallback(pokemon) {
+    const sprite = pokemon.animatedSprite || pokemon.sprite;
+    
+    // If using DS sprites and Pokemon has a fallback, use it
+    if (gameData.spriteStyle === 'ds' && pokemon.fallbackSprite) {
+        return {
+            src: sprite,
+            onerror: `this.onerror=null; this.src='${pokemon.fallbackSprite}';`
+        };
+    }
+    
+    // If using DS sprites but no fallback property, generate it on the fly
+    if (gameData.spriteStyle === 'ds') {
+        const cleanName = normalizePokemonNameForAPI(pokemon.name);
+        const fallback = getDSSpriteFallback(cleanName, pokemon.isShiny);
+        return {
+            src: sprite,
+            onerror: `this.onerror=null; this.src='${fallback}';`
+        };
+    }
+    
+    // Default fallback for modern sprites
+    const fallback = 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/0.png';
+    return {
+        src: sprite,
+        onerror: `this.onerror=null; this.src='${fallback}';`
+    };
+}
+
+function ensurePokemonHasFallback(pokemon) {
+    if (!pokemon) return pokemon;
+    
+    // Skip custom ROM Pokemon
+    if (gameData.currentGeneration === 'custom-rom' && gameData.customRomData) {
+        return pokemon;
+    }
+    
+    // If using DS sprites and Pokemon doesn't have fallback, add it
+    if (gameData.spriteStyle === 'ds' && !pokemon.fallbackSprite) {
+        const cleanName = normalizePokemonNameForAPI(pokemon.name);
+        pokemon.fallbackSprite = getDSSpriteFallback(cleanName, pokemon.isShiny);
+    }
+    
+    return pokemon;
 }
 
 // Track selected generation during setup
@@ -2004,15 +2223,18 @@ async function getPokemonData(name, isShiny = false) {
         return null;
     }
 
-    // Original PokeAPI logic
+    // Check if using DS-style sprites
+    const useDSSprites = gameData.spriteStyle === 'ds';
+    
     const cleanName = normalizePokemonNameForAPI(name);
-    const cacheKey = `${cleanName}_${isShiny ? 'shiny' : 'normal'}`;
+    const cacheKey = `${cleanName}_${isShiny ? 'shiny' : 'normal'}_${useDSSprites ? 'ds' : 'modern'}`;
 
     if (pokemonCache[cacheKey]) {
         return pokemonCache[cacheKey];
     }
 
     try {
+        // Still fetch from PokeAPI for type data
         const response = await fetch(`https://pokeapi.co/api/v2/pokemon/${cleanName}`);
         if (!response.ok) {
             console.error(`PokeAPI error for "${name}" (normalized to "${cleanName}"): ${response.status}`);
@@ -2020,6 +2242,27 @@ async function getPokemonData(name, isShiny = false) {
         }
 
         const data = await response.json();
+        
+        // If using DS sprites, try animated first with fallback to static
+        if (useDSSprites) {
+            const dsSprite = getDSSpriteUrl(cleanName, isShiny);
+            const dsFallbackSprite = getDSSpriteFallback(cleanName, isShiny);
+            
+            const pokemonData = {
+                name: data.name,
+                displayName: name.charAt(0).toUpperCase() + name.slice(1),
+                sprite: dsSprite,
+                animatedSprite: dsSprite,
+                fallbackSprite: dsFallbackSprite, // Store fallback for onerror
+                types: data.types.map(t => t.type.name),
+                isShiny: isShiny
+            };
+
+            pokemonCache[cacheKey] = pokemonData;
+            return pokemonData;
+        }
+
+        // Original PokeAPI logic for modern sprites
         const pokemonData = {
             name: data.name,
             displayName: name.charAt(0).toUpperCase() + name.slice(1),
@@ -2049,7 +2292,6 @@ async function getPokemonData(name, isShiny = false) {
         return null;
     }
 }
-
 
 // Get generation-specific sprite from sprite data
 function getGenerationSpecificSprite(sprites, generation, isShiny = false) {
@@ -2132,6 +2374,7 @@ function initializeApp() {
     updateStrictModeUI();
     updateGenerationDisplay();
     initializeGameSelector();
+    initializeSpriteStyleSelector(); // NEW: Initialize sprite style selector
     renderGymLeaderTracker();
 
     // Force update streamer window if it exists
@@ -3055,7 +3298,7 @@ function clearTeamSlot(player, slot) {
     }
 }
 
-// Render team slots
+// Render team slots with DS sprite fallback support
 function renderTeams() {
     // Get strict mode violations
     const violations = checkStrictModeViolations();
@@ -3094,9 +3337,15 @@ function renderTeams() {
                 if (hasViolation) overlayClass += 'strict-violation-overlay ';
                 if (isShiny) overlayClass += 'shiny-pokemon ';
 
+                // Get sprite with fallback
+                const spriteData = getSpriteWithFallback(pokemon);
+
                 slot.innerHTML = `
                     <div class="${overlayClass}" style="position: relative;">
-                        <img src="${pokemon.animatedSprite || pokemon.sprite}" class="pokemon-sprite" onerror="this.src='https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/0.png'">
+                        <img src="${spriteData.src}" 
+                             onerror="${spriteData.onerror}" 
+                             class="pokemon-sprite" 
+                             alt="${pokemon.nickname}">
                     </div>
                     <div>${pokemon.nickname}${isFainted ? ' (Fainted)' : ''}${hasViolation ? ' (Violation)' : ''}${isShiny ? ' ✨' : ''}</div>
                     <div class="pokemon-types">
@@ -3254,7 +3503,7 @@ function addToTeam(player, pokemon) {
 }
 
 
-// Render available Pokemon for team building
+// Render available Pokemon for team building with DS sprite fallback
 function renderAvailablePokemon() {
     const container = document.getElementById('available-pokemon');
     const allPokemon = [
@@ -3380,12 +3629,19 @@ function renderAvailablePokemon() {
                 return '';
             };
 
+            // Get sprites with fallback
+            const sprite1Data = getSpriteWithFallback(pokemon1);
+            const sprite2Data = getSpriteWithFallback(pokemon2);
+
             pairDiv.innerHTML = `
                 <div style="display: flex; align-items: center; gap: 15px;">
                     <!-- Player 1 Pokemon -->
                     <div style="display: flex; align-items: center; gap: 8px; flex: 1;">
                         <div class="${getOverlayClass(pokemon1)}" style="position: relative;">
-                            <img src="${pokemon1.sprite}" style="width: 48px; height: 48px; image-rendering: pixelated; ${getSpriteFilter(pokemon1)}" onerror="this.src='https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/0.png'">
+                            <img src="${sprite1Data.src}" 
+                                 onerror="${sprite1Data.onerror}" 
+                                 style="width: 48px; height: 48px; image-rendering: pixelated; ${getSpriteFilter(pokemon1)}" 
+                                 alt="${pokemon1.nickname}">
                         </div>
                         <div>
                             <div style="font-weight: bold; color: #2980b9;">${gameData.playerNames.player1}'s ${pokemon1.nickname}</div>
@@ -3402,7 +3658,10 @@ function renderAvailablePokemon() {
                     <!-- Player 2 Pokemon -->
                     <div style="display: flex; align-items: center; gap: 8px; flex: 1;">
                         <div class="${getOverlayClass(pokemon2)}" style="position: relative;">
-                            <img src="${pokemon2.sprite}" style="width: 48px; height: 48px; image-rendering: pixelated; ${getSpriteFilter(pokemon2)}" onerror="this.src='https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/0.png'">
+                            <img src="${sprite2Data.src}" 
+                                 onerror="${sprite2Data.onerror}" 
+                                 style="width: 48px; height: 48px; image-rendering: pixelated; ${getSpriteFilter(pokemon2)}" 
+                                 alt="${pokemon2.nickname}">
                         </div>
                         <div>
                             <div style="font-weight: bold; color: #c0392b;">${gameData.playerNames.player2}'s ${pokemon2.nickname}</div>
@@ -3490,10 +3749,16 @@ function renderAvailablePokemon() {
                 return '';
             };
 
+            // Get sprite with fallback
+            const spriteData = getSpriteWithFallback(pokemon);
+
             pairDiv.innerHTML = `
                 <div style="display: flex; align-items: center; gap: 10px;">
                     <div class="${getOverlayClass(pokemon)}" style="position: relative;">
-                        <img src="${pokemon.sprite}" style="width: 48px; height: 48px; image-rendering: pixelated; ${getSpriteFilter(pokemon)}" onerror="this.src='https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/0.png'">
+                        <img src="${spriteData.src}" 
+                             onerror="${spriteData.onerror}" 
+                             style="width: 48px; height: 48px; image-rendering: pixelated; ${getSpriteFilter(pokemon)}" 
+                             alt="${pokemon.nickname}">
                     </div>
                     <div style="flex-grow: 1;">
                         <div style="font-weight: bold; color: ${pokemon.player === 1 ? '#2980b9' : '#c0392b'};">${gameData.playerNames[`player${pokemon.player}`]}'s ${pokemon.nickname}${isFainted ? ' (Fainted)' : ''}${isFailedEncounter ? ' (Failed)' : ''}</div>
@@ -3543,7 +3808,7 @@ function saveData() {
 }
 
 
-// Load data from localStorage with generation support
+// Load data from localStorage with sprite style support
 function loadData() {
     const saved = localStorage.getItem('soulLinkDataMultiGen');
     if (saved) {
@@ -3566,6 +3831,7 @@ function loadData() {
                 // Custom ROM properties
                 isCustomRom: loaded.isCustomRom || false,
                 customPokemonGens: loaded.customPokemonGens || [],
+                spriteStyle: loaded.spriteStyle || 'modern' // NEW: Load sprite style preference
             };
 
             // Handle custom ROM with uploaded data on load
@@ -3661,7 +3927,8 @@ function clearAllData() {
             currentGeneration: null,
             gymProgress: {},
             isCustomRom: false,
-            customPokemonGens: []
+            customPokemonGens: [],
+            spriteStyle: 'modern' // NEW: Reset sprite style to modern
         };
 
         customRomData = {
@@ -3669,7 +3936,10 @@ function clearAllData() {
             routes: [],
             sprites: {},
             evolutionLines: {},
-            name: 'Custom ROM'
+            name: 'Custom ROM',
+            gymLeaders: [],
+            eliteFour: [],
+            kantoLeaders: []
         }
 
         // Reset custom ROM state variables
@@ -3680,6 +3950,9 @@ function clearAllData() {
 
         // Reset carousel position
         currentCarouselIndex = 0;
+
+        // Clear sprite cache
+        pokemonCache = {};
 
         saveData();
 
@@ -4117,7 +4390,7 @@ function isDuplicateSuggestion(newSuggestion, existingSuggestions) {
     });
 }
 
-// Display suggestions in modal
+// Display suggestions in modal with DS sprite fallback
 function displaySuggestions(suggestions) {
     const content = document.getElementById('suggestion-content');
 
@@ -4137,35 +4410,38 @@ function displaySuggestions(suggestions) {
         optionDiv.style.background = '#fff';
         optionDiv.style.marginBottom = '15px';
 
+        // Generate team HTML with sprite fallback
+        const generateTeamHTML = (team) => {
+            return team.map(pokemon => {
+                const spriteData = getSpriteWithFallback(pokemon);
+                return `
+                    <div style="display: flex; align-items: center; gap: 6px; padding: 4px; background: #fff; border: 1px solid #ddd; border-radius: 4px; font-size: 8px;">
+                        <img src="${spriteData.src}" 
+                             onerror="${spriteData.onerror}" 
+                             style="width: 32px; height: 32px; image-rendering: pixelated;" 
+                             alt="${pokemon.nickname}">
+                        <div>
+                            <div style="font-weight: bold;">${pokemon.nickname}</div>
+                            <div style="font-size: 6px; color: #666;">${pokemon.types.join('/')}</div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        };
+
         optionDiv.innerHTML = `
             <h3 style="color: #2a5834; margin-bottom: 10px; font-size: 12px;">Option ${index + 1}</h3>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 15px;">
                 <div style="border: 2px solid #2a5834; border-radius: 6px; padding: 10px; background: #f0f8ff;">
                     <h4 style="color: #2a5834; margin-bottom: 8px; font-size: 10px;">${gameData.playerNames.player1}'s Team</h4>
                     <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px;">
-                        ${suggestion.team1.map(pokemon => `
-                            <div style="display: flex; align-items: center; gap: 6px; padding: 4px; background: #fff; border: 1px solid #ddd; border-radius: 4px; font-size: 8px;">
-                                <img src="${pokemon.sprite}" style="width: 32px; height: 32px; image-rendering: pixelated;" onerror="this.src='https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/0.png'">
-                                <div>
-                                    <div style="font-weight: bold;">${pokemon.nickname}</div>
-                                    <div style="font-size: 6px; color: #666;">${pokemon.types.join('/')}</div>
-                                </div>
-                            </div>
-                        `).join('')}
+                        ${generateTeamHTML(suggestion.team1)}
                     </div>
                 </div>
                 <div style="border: 2px solid #2a5834; border-radius: 6px; padding: 10px; background: #f0f8ff;">
                     <h4 style="color: #2a5834; margin-bottom: 8px; font-size: 10px;">${gameData.playerNames.player2}'s Team</h4>
                     <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px;">
-                        ${suggestion.team2.map(pokemon => `
-                            <div style="display: flex; align-items: center; gap: 6px; padding: 4px; background: #fff; border: 1px solid #ddd; border-radius: 4px; font-size: 8px;">
-                                <img src="${pokemon.sprite}" style="width: 32px; height: 32px; image-rendering: pixelated;" onerror="this.src='https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/0.png'">
-                                <div>
-                                    <div style="font-weight: bold;">${pokemon.nickname}</div>
-                                    <div style="font-size: 6px; color: #666;">${pokemon.types.join('/')}</div>
-                                </div>
-                            </div>
-                        `).join('')}
+                        ${generateTeamHTML(suggestion.team2)}
                     </div>
                 </div>
             </div>
@@ -5263,7 +5539,7 @@ function updateStreamerPlayerName(doc, playerNum, name) {
     }
 }
 
-// Smart team update that only changes what's different
+// Smart team update that only changes what's different with DS sprite fallback
 function updateStreamerTeamSmart(playerNum, doc, newTeam) {
     const container = doc.getElementById(`streamer-team${playerNum}`);
     if (!container) return;
@@ -5290,11 +5566,29 @@ function updateStreamerTeamSmart(playerNum, doc, newTeam) {
             const isFainted = pokemon.fainted;
             const isShiny = pokemon.isShiny;
 
+            // Ensure Pokemon has fallback sprite
+            ensurePokemonHasFallback(pokemon);
+            
+            // Get sprite URLs (use animatedSprite or sprite, with fallback)
+            const spriteUrl = pokemon.animatedSprite || pokemon.sprite;
+            let fallbackUrl = pokemon.fallbackSprite;
+            
+            // If no fallback and using DS sprites, generate it
+            if (!fallbackUrl && gameData.spriteStyle === 'ds') {
+                const cleanName = normalizePokemonNameForAPI(pokemon.name);
+                fallbackUrl = getDSSpriteFallback(cleanName, pokemon.isShiny);
+            }
+            
+            // Default fallback
+            if (!fallbackUrl) {
+                fallbackUrl = 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/0.png';
+            }
+
             slot.innerHTML = `
                 <div class="${isFainted ? 'fainted' : ''} ${isShiny ? 'shiny-pokemon' : ''}" style="position: relative;">
-                    <img src="${pokemon.sprite}" 
+                    <img src="${spriteUrl}" 
+                         onerror="this.onerror=null; this.src='${fallbackUrl}';" 
                          class="pokemon-sprite sprite-${savedSpriteSize} ${isShiny ? 'shiny-border' : ''}" 
-                         onerror="this.src='https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/0.png'"
                          alt="${pokemon.nickname}">
                     ${isFainted ? '<div class="fainted-overlay">KO</div>' : ''}
                 </div>
@@ -5310,7 +5604,6 @@ function updateStreamerTeamSmart(playerNum, doc, newTeam) {
         }
     }
 }
-
 
 // Update the streamer window with current team data
 function updateStreamerWindow() {
@@ -5375,7 +5668,7 @@ function updateStreamerWindow() {
     }
 }
 
-// Update a specific team in the streamer window
+// Update a specific team in the streamer window with DS sprite fallback
 function updateStreamerTeam(playerNum, doc) {
     const container = doc.getElementById(`streamer-team${playerNum}`);
     if (!container) return;
@@ -5428,11 +5721,29 @@ function updateStreamerTeam(playerNum, doc) {
                 }
             }
 
+            // Ensure Pokemon has fallback sprite
+            ensurePokemonHasFallback(pokemon);
+            
+            // Get sprite URLs (use animatedSprite or sprite, with fallback)
+            const spriteUrl = pokemon.animatedSprite || pokemon.sprite;
+            let fallbackUrl = pokemon.fallbackSprite;
+            
+            // If no fallback and using DS sprites, generate it
+            if (!fallbackUrl && gameData.spriteStyle === 'ds') {
+                const cleanName = normalizePokemonNameForAPI(pokemon.name);
+                fallbackUrl = getDSSpriteFallback(cleanName, pokemon.isShiny);
+            }
+            
+            // Default fallback
+            if (!fallbackUrl) {
+                fallbackUrl = 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/0.png';
+            }
+            
             slotDiv.innerHTML = `
                 <div class="${isFainted ? 'fainted' : ''} ${isShiny ? 'shiny-pokemon' : ''}" style="position: relative;">
-                    <img src="${pokemon.animatedSprite || pokemon.sprite}" 
+                    <img src="${spriteUrl}" 
+                         onerror="this.onerror=null; this.src='${fallbackUrl}';" 
                          class="pokemon-sprite sprite-${savedSpriteSize} ${isShiny ? 'shiny-border' : ''}" 
-                         onerror="this.src='https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/0.png'"
                          alt="${pokemon.nickname}">
                     ${isFainted ? '<div class="fainted-overlay">KO</div>' : ''}
                 </div>
