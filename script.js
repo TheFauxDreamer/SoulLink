@@ -1845,6 +1845,13 @@ function initializeCarousel() {
 
         track.appendChild(slide);
 
+        // Add divider after 7th dot (index 7)
+        if (index === 7) {
+            const divider = document.createElement('div');
+            divider.className = 'carousel-divider';
+            indicators.appendChild(divider);
+        }
+
         const dot = document.createElement('div');
         dot.className = `carousel-dot ${index === 0 ? 'active' : ''}`;
         dot.onclick = () => goToSlide(index);
