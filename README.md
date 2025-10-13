@@ -48,3 +48,7 @@ CSV templates for the following custom data are available from the website itsel
 
 Look it's not the greatest, _I know_.
 But I only play like Emerald Seaglass and so I'm not overly fussed. If you've got a better idea for implementing this please hit me up. Don't know if you could do something crazy cool like upload the ROM and read its contents?
+
+## Nuzlocke Version
+
+The Nuzlocke version is always a couple versions behind, and isn't currently hosted: https://github.com/TheFauxDreamer/nuzlocke
