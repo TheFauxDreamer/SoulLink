@@ -6,7 +6,7 @@ Playing a Soul Link Nuzlocke with a friend? Trying to work out how on earth you'
 
 You're in the right place!
 
-Try it out: https://soullink--laughing-lichterman-c3b6ff.netlify.app
+Try it out: https://soullink.fauxprojects.xyz
 
 ## What it does
 
