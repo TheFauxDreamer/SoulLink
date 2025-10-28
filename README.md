@@ -22,6 +22,7 @@ Try it out: https://soullink.fauxprojects.xyz
 - **Mix & Match Generations** - select any base game, with any combination of pokemon gens from 1-9
 - **Custom ROM Hack Support** - playing a completely custom ROM hack game? We now support fakemon, sprits, routes etc!
 - **Gen 5 era sprites** - prefer the look of the DS era games? Toggle DS sprites (thanks to PK Showdown)
+- **Switch Game Font** - Added the ability to enable a [fan recreation](https://www.pokemonaaah.net/news/2020/01/fontupdate/) of the switch game font.
 
 ### WIP Features
 - **Gen 3 era sprites** - same as the above, just need to find sprites in this style for all generations
