@@ -1,4 +1,4 @@
-// Konami Code Easter Egg
+// Konami Code Easter Egg with Streamer Window Sync
 (function() {
     const konamiCode = ['ArrowUp', 'ArrowUp', 'ArrowDown', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight'];
     let konamiIndex = 0;
@@ -39,11 +39,32 @@
             
             // Show a fun notification
             showKonamiNotification('✨ Pokemon Font Activated! ✨');
+            
+            // Sync with streamer window if it exists
+            syncStreamerWindowFont(true);
         } else {
             document.body.classList.remove('pokemon-font-active');
             localStorage.setItem('pokemonFontActive', 'false');
             
             showKonamiNotification('Pokemon Font Deactivated');
+            
+            // Sync with streamer window if it exists
+            syncStreamerWindowFont(false);
+        }
+    }
+
+    function syncStreamerWindowFont(isActive) {
+        // Check if streamer window exists and is open
+        if (typeof streamerWindow !== 'undefined' && streamerWindow && !streamerWindow.closed) {
+            try {
+                if (isActive) {
+                    streamerWindow.document.body.classList.add('pokemon-font-active');
+                } else {
+                    streamerWindow.document.body.classList.remove('pokemon-font-active');
+                }
+            } catch (e) {
+                console.log('Could not sync font with streamer window:', e);
+            }
         }
     }
 
@@ -91,6 +112,10 @@
             }, 500);
         }, 2000);
     }
+    
+    // Make sync function globally accessible so it can be called when streamer window opens
+    window.syncStreamerWindowFont = syncStreamerWindowFont;
+    window.isPokemonFontActive = () => pokemonFontActive;
 })();
 
 // Custom ROM data storage
@@ -4633,6 +4658,10 @@ function openStreamerMode() {
         setTimeout(() => {
             if (streamerWindow && !streamerWindow.closed) {
                 updateStreamerWindow();
+                // Sync Pokemon font state with streamer window
+                if (typeof window.syncStreamerWindowFont === 'function') {
+                    window.syncStreamerWindowFont(window.isPokemonFontActive());
+                }
             }
         }, 200);
 
@@ -4763,6 +4792,20 @@ function setupStreamerWindow() {
             <style>
                 @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
                 
+                /* Custom Pokemon Font */
+                @font-face {
+                    font-family: 'Thraex Magnus';
+                    src: url('Thraex Magnus.otf') format('opentype');
+                    font-weight: normal;
+                    font-style: normal;
+                }
+
+                /* Class to apply when Konami code is activated */
+                body.pokemon-font-active {
+                    font-family: 'Thraex Magnus', 'Press Start 2P', monospace;
+                    font-size: 16px; /* Scaled for streamer window */
+                }
+
                 * {
                     margin: 0;
                     padding: 0;
@@ -5106,7 +5149,7 @@ function setupStreamerWindow() {
                 .type-fairy { background: #ee99ac; }
             </style>
         </head>
-        <body>
+        <body${window.localStorage.getItem('pokemonFontActive') === 'true' ? ' class="pokemon-font-active"' : ''}>
             <div class="theme-selector" id="theme-selector-container">
                 <div>
                     <div class="selector-label">Theme:</div>
