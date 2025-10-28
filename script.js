@@ -1,3 +1,98 @@
+// Konami Code Easter Egg
+(function() {
+    const konamiCode = ['ArrowUp', 'ArrowUp', 'ArrowDown', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight'];
+    let konamiIndex = 0;
+    let pokemonFontActive = false;
+
+    // Check if Konami code state is saved in localStorage
+    if (localStorage.getItem('pokemonFontActive') === 'true') {
+        document.body.classList.add('pokemon-font-active');
+        pokemonFontActive = true;
+    }
+
+    document.addEventListener('keydown', function(e) {
+        // Check if the key matches the next key in the sequence
+        if (e.key === konamiCode[konamiIndex]) {
+            konamiIndex++;
+            
+            // If the entire code has been entered
+            if (konamiIndex === konamiCode.length) {
+                togglePokemonFont();
+                konamiIndex = 0; // Reset for next time
+            }
+        } else {
+            // Reset if wrong key is pressed
+            konamiIndex = 0;
+            // But check if the current key is the first key in the sequence
+            if (e.key === konamiCode[0]) {
+                konamiIndex = 1;
+            }
+        }
+    });
+
+    function togglePokemonFont() {
+        pokemonFontActive = !pokemonFontActive;
+        
+        if (pokemonFontActive) {
+            document.body.classList.add('pokemon-font-active');
+            localStorage.setItem('pokemonFontActive', 'true');
+            
+            // Show a fun notification
+            showKonamiNotification('✨ Pokemon Font Activated! ✨');
+        } else {
+            document.body.classList.remove('pokemon-font-active');
+            localStorage.setItem('pokemonFontActive', 'false');
+            
+            showKonamiNotification('Pokemon Font Deactivated');
+        }
+    }
+
+    function showKonamiNotification(message) {
+        const notification = document.createElement('div');
+        notification.textContent = message;
+        notification.style.cssText = `
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+            color: #2a5834;
+            padding: 20px 40px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            z-index: 10000;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+            border: 4px solid #2a5834;
+            animation: konamiPulse 0.5s ease-in-out;
+        `;
+        
+        // Add animation keyframes if they don't exist
+        if (!document.querySelector('#konami-style')) {
+            const style = document.createElement('style');
+            style.id = 'konami-style';
+            style.textContent = `
+                @keyframes konamiPulse {
+                    0%, 100% { transform: translate(-50%, -50%) scale(1); }
+                    50% { transform: translate(-50%, -50%) scale(1.1); }
+                }
+            `;
+            document.head.appendChild(style);
+        }
+        
+        document.body.appendChild(notification);
+        
+        // Remove notification after 2 seconds
+        setTimeout(() => {
+            notification.style.transition = 'opacity 0.5s';
+            notification.style.opacity = '0';
+            setTimeout(() => {
+                document.body.removeChild(notification);
+            }, 500);
+        }, 2000);
+    }
+})();
+
 // Custom ROM data storage
 let customRomData = {
     pokemon: [],

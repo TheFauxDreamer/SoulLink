@@ -13,6 +13,19 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
 
+        /* Custom Pokemon Font */
+        @font-face {
+            font-family: 'Thraex Magnus';
+            src: url('Thraex Magnus.otf') format('opentype');
+            font-weight: normal;
+            font-style: normal;
+        }
+
+        /* Class to apply when Konami code is activated */
+        body.pokemon-font-active {
+            font-family: 'Thraex Magnus', 'Press Start 2P', monospace;
+        }
+
         * {
             margin: 0;
             padding: 0;
